@@ -1,0 +1,6 @@
+{
+  "name": "yo-amor-propio-tienda",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tienda online YO Amor Propio (sitio estatico + funcion serverless para firmar pagos Bold)"
+}

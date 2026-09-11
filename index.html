@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>YO Amor Propio</title>
+<meta name="description" content="Tienda online YO Amor Propio: bebidas funcionales y suplementos de bienestar. Envíos a toda Colombia.">
+<!--
+  CONFIGURACIÓN DE PAGOS EN LÍNEA (Bold)
+  --------------------------------------
+  1. Cuando tengas tu Cuenta Bold y tus llaves de integración (bold.co -> Llaves de integración -> API pagos en línea),
+     reemplaza BOLD_API_KEY abajo (en el <script> al final del archivo) por tu LLAVE DE IDENTIDAD (es pública, no pasa nada si se ve).
+  2. La LLAVE SECRETA nunca va aquí ni en ningún archivo de este proyecto: se configura como variable de entorno
+     BOLD_SECRET_KEY en el panel de Vercel (Project Settings -> Environment Variables). La usa únicamente api/bold-signature.js.
+  3. Mientras BOLD_API_KEY esté vacío, el botón de pago en línea se oculta automáticamente y solo se ofrece el pago manual.
+-->
+<script src="https://checkout.bold.co/library/boldPaymentButton.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap');
+
+  :root{
+    --brand:#6B2E7A;
+    --brand-dark:#4A1F57;
+    --accent:#E0447D;
+    --bg:#FAF6F8;
+    --surface:#FFFFFF;
+    --text:#2B2230;
+    --text-muted:#7A6B80;
+    --border:#EEE1EA;
+    --shadow: 0 8px 24px rgba(75,25,70,.10);
+    --radius: 18px;
+    --dia:#E8792A;
+    --noche:#33285F;
+    --rejuv:#A0298C;
+    --fit:#4C8C3C;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#1B1520;
+      --surface:#241C29;
+      --text:#F3EAF0;
+      --text-muted:#B7A7BC;
+      --border:#3A2E3F;
+      --shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#1B1520;
+    --surface:#241C29;
+    --text:#F3EAF0;
+    --text-muted:#B7A7BC;
+    --border:#3A2E3F;
+    --shadow: 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Poppins',sans-serif;
+    margin:0;
+    line-height:1.5;
+  }
+  img{display:block;}
+  a{color:inherit;}
+  .wrap{max-width:1180px; margin:0 auto; padding-inline:20px;}
+  .brand-script{font-family:'Caveat',cursive;}
+
+  /* Header */
+  header.site{
+    position:sticky; top:0; z-index:40;
+    background:color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom:1px solid var(--border);
+  }
+  .header-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding-block:10px;
+    gap:12px;
+  }
+  .logo-link{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--text); flex-shrink:0;}
+  .logo-link img{height:42px; width:42px; object-fit:contain; border-radius:10px;}
+  .logo-link span{font-weight:800; font-size:1.05rem; letter-spacing:.2px;}
+  nav.main-nav{display:flex; gap:22px; font-weight:500; font-size:.95rem;}
+  nav.main-nav a{text-decoration:none; color:var(--text-muted); white-space:nowrap;}
+  nav.main-nav a:hover{color:var(--brand);}
+  .header-actions{display:flex; align-items:center; gap:10px;}
+  .icon-btn{
+    position:relative; border:1px solid var(--border); background:var(--surface);
+    color:var(--text); border-radius:999px; width:42px; height:42px;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    font-size:1.1rem;
+  }
+  .badge{
+    position:absolute; top:-4px; right:-4px; background:var(--accent); color:#fff;
+    font-size:.68rem; font-weight:700; min-width:18px; height:18px; border-radius:999px;
+    display:flex; align-items:center; justify-content:center; padding:0 4px;
+  }
+  .menu-toggle{display:none;}
+
+  @media (max-width:820px){
+    nav.main-nav{
+      position:fixed; inset:60px 0 auto 0; background:var(--surface); border-bottom:1px solid var(--border);
+      flex-direction:column; padding:14px 20px 20px; gap:14px; transform:translateY(-120%); transition:transform .25s ease;
+      box-shadow: var(--shadow);
+    }
+    nav.main-nav.open{transform:translateY(0);}
+    .menu-toggle{display:flex;}
+  }
+
+  /* Buttons */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    border:none; cursor:pointer; font-family:inherit; font-weight:600; font-size:.95rem;
+    padding:12px 22px; border-radius:999px; text-decoration:none; transition:transform .15s ease, opacity .15s ease;
+  }
+  .btn:active{transform:scale(.97);}
+  .btn-primary{background:var(--brand); color:#fff;}
+  .btn-primary:hover{background:var(--brand-dark);}
+  .btn-accent{background:var(--accent); color:#fff;}
+  .btn-accent:hover{opacity:.9;}
+  .btn-outline{background:transparent; color:var(--brand); border:1.5px solid var(--brand);}
+  .btn-ghost{background:var(--border); color:var(--text);}
+  .btn-block{width:100%;}
+  .btn[disabled]{opacity:.5; cursor:not-allowed;}
+  .btn-sm{padding:8px 16px; font-size:.85rem;}
+
+  /* Hero */
+  .hero{
+    padding-block: 54px 40px;
+    display:grid; grid-template-columns: 1.1fr .9fr; gap:40px; align-items:center;
+  }
+  .hero h1{
+    font-size: clamp(2rem, 4vw, 3rem); line-height:1.08; margin:0 0 16px;
+    font-weight:800;
+  }
+  .hero h1 em{font-style:normal; color:var(--accent);}
+  .hero p{color:var(--text-muted); font-size:1.05rem; max-width:46ch; margin:0 0 26px;}
+  .hero-ctas{display:flex; gap:12px; flex-wrap:wrap;}
+  .hero-img-wrap{
+    border-radius: 26px; overflow:hidden; box-shadow:var(--shadow);
+  }
+  .hero-img-wrap img{width:100%; height:100%; object-fit:cover;}
+
+  @media (max-width:820px){
+    .hero{grid-template-columns:1fr; padding-block:32px 20px;}
+    .hero-img-wrap{order:-1;}
+  }
+
+  /* Trust bar */
+  .trust-bar{
+    background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+    padding-block:22px;
+  }
+  .trust-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:18px; text-align:center;
+  }
+  .trust-item{font-size:.85rem; color:var(--text-muted); font-weight:500;}
+  .trust-item strong{display:block; color:var(--text); font-size:.95rem; margin-bottom:2px;}
+  @media (max-width:700px){ .trust-grid{grid-template-columns:1fr 1fr;} }
+
+  /* Section titles */
+  .section{padding-block:56px;}
+  .section-head{text-align:center; max-width:640px; margin:0 auto 36px;}
+  .kicker{
+    color:var(--accent); font-weight:700; font-size:.8rem; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .section-head h2{font-size:clamp(1.6rem,3vw,2.1rem); margin:8px 0 10px; font-weight:800;}
+  .section-head p{color:var(--text-muted); margin:0;}
+
+  /* Products grid */
+  .products-grid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:22px;
+  }
+  @media (max-width:980px){ .products-grid{grid-template-columns:1fr 1fr;} }
+  @media (max-width:560px){ .products-grid{grid-template-columns:1fr;} }
+
+  .card{
+    background:var(--surface); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; border:1px solid var(--border);
+  }
+  .card-img{width:100%; aspect-ratio:1/1; object-fit:cover; cursor:pointer;}
+  .card-body{padding:16px 18px 20px; display:flex; flex-direction:column; gap:8px; flex:1;}
+  .line-tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:.72rem; font-weight:700;
+    text-transform:uppercase; letter-spacing:.06em; color:#fff; padding:4px 10px; border-radius:999px; width:fit-content;
+  }
+  .card h3{margin:2px 0 0; font-size:1.15rem; font-weight:700;}
+  .card .tagline{color:var(--text-muted); font-size:.86rem; margin:0; min-height:2.6em;}
+  .card .price{font-size:1.25rem; font-weight:800; color:var(--brand); margin:4px 0 2px;}
+  .card-actions{display:flex; gap:8px; margin-top:6px;}
+  .details-toggle{
+    background:none; border:none; color:var(--brand); font-weight:600; font-size:.85rem; cursor:pointer;
+    text-decoration:underline; padding:0; text-align:left;
+  }
+  .details-panel{
+    display:none; padding:14px 18px 18px; border-top:1px solid var(--border); font-size:.88rem; color:var(--text-muted);
+  }
+  .details-panel.open{display:block;}
+  .details-panel h4{margin:10px 0 6px; color:var(--text); font-size:.85rem; text-transform:uppercase; letter-spacing:.05em;}
+  .details-panel ul{margin:0; padding-left:18px;}
+  .details-panel li{margin-bottom:3px;}
+  .details-panel .meta{font-size:.8rem; margin-top:10px; color:var(--text-muted);}
+
+  /* How it works */
+  .steps{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+  @media (max-width:820px){ .steps{grid-template-columns:1fr 1fr;} }
+  @media (max-width:500px){ .steps{grid-template-columns:1fr;} }
+  .step{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px 18px; text-align:left;}
+  .step-num{
+    width:34px; height:34px; border-radius:999px; background:var(--brand); color:#fff; font-weight:800;
+    display:flex; align-items:center; justify-content:center; margin-bottom:12px; font-size:.95rem;
+  }
+  .step h4{margin:0 0 6px; font-size:1rem;}
+  .step p{margin:0; color:var(--text-muted); font-size:.86rem;}
+
+  /* Distributor banner */
+  .distrib-banner{
+    background:linear-gradient(135deg, var(--brand), var(--rejuv));
+    border-radius:26px; color:#fff; padding:36px 32px; display:flex; align-items:center; justify-content:space-between;
+    gap:24px; flex-wrap:wrap;
+  }
+  .distrib-banner h3{margin:0 0 8px; font-size:1.35rem;}
+  .distrib-banner p{margin:0; opacity:.92; max-width:48ch; font-size:.92rem;}
+  .distrib-banner .btn{background:#fff; color:var(--brand-dark);}
+
+  /* Footer */
+  footer{background:var(--brand-dark); color:#fff; padding-block:44px 26px; margin-top:20px;}
+  .footer-grid{display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:32px;}
+  @media (max-width:700px){ .footer-grid{grid-template-columns:1fr;} }
+  footer h4{font-size:.9rem; text-transform:uppercase; letter-spacing:.06em; margin:0 0 14px; opacity:.85;}
+  footer p, footer li{color:rgba(255,255,255,.78); font-size:.88rem; line-height:1.7;}
+  footer ul{list-style:none; margin:0; padding:0;}
+  footer a{text-decoration:none; color:rgba(255,255,255,.85);}
+  footer a:hover{color:#fff;}
+  .footer-bottom{
+    border-top:1px solid rgba(255,255,255,.15); margin-top:32px; padding-top:18px;
+    font-size:.78rem; color:rgba(255,255,255,.6); text-align:center;
+  }
+  .disclaimer{font-size:.76rem; color:rgba(255,255,255,.55); max-width:70ch; margin:10px auto 0; text-align:center;}
+
+  /* Floating WhatsApp */
+  .float-wa{
+    position:fixed; bottom:20px; right:20px; z-index:45;
+    width:56px; height:56px; border-radius:999px; background:#25D366; color:#fff;
+    display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(0,0,0,.25);
+    font-size:1.5rem; text-decoration:none;
+  }
+
+  /* Overlay + drawers/modals */
+  .overlay{
+    position:fixed; inset:0; background:rgba(20,10,20,.5); z-index:60; display:none;
+  }
+  .overlay.open{display:block;}
+
+  .drawer{
+    position:fixed; top:0; right:0; bottom:0; width:min(420px, 100vw); background:var(--surface);
+    z-index:61; transform:translateX(100%); transition:transform .28s ease; display:flex; flex-direction:column;
+    box-shadow:-10px 0 30px rgba(0,0,0,.2);
+  }
+  .drawer.open{transform:translateX(0);}
+  .drawer-head{display:flex; align-items:center; justify-content:space-between; padding:18px 20px; border-bottom:1px solid var(--border);}
+  .drawer-head h3{margin:0; font-size:1.1rem;}
+  .close-btn{background:none; border:none; font-size:1.3rem; cursor:pointer; color:var(--text-muted);}
+  .drawer-body{flex:1; overflow-y:auto; padding:16px 20px;}
+  .drawer-foot{padding:16px 20px; border-top:1px solid var(--border);}
+
+  .cart-item{display:flex; gap:12px; padding:12px 0; border-bottom:1px solid var(--border);}
+  .cart-item img{width:64px; height:64px; border-radius:10px; object-fit:cover; flex-shrink:0;}
+  .cart-item-info{flex:1; min-width:0;}
+  .cart-item-info h5{margin:0 0 4px; font-size:.92rem;}
+  .cart-item-price{color:var(--text-muted); font-size:.82rem;}
+  .qty-row{display:flex; align-items:center; gap:10px; margin-top:6px;}
+  .qty-btn{
+    width:26px; height:26px; border-radius:8px; border:1px solid var(--border); background:var(--bg);
+    cursor:pointer; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .remove-link{background:none; border:none; color:var(--accent); font-size:.78rem; cursor:pointer; text-decoration:underline; padding:0; margin-left:auto;}
+  .cart-empty{text-align:center; color:var(--text-muted); padding:40px 10px; font-size:.9rem;}
+  .cart-total-row{display:flex; justify-content:space-between; font-weight:700; font-size:1.05rem; margin-bottom:14px;}
+
+  /* Checkout modal */
+  .modal-wrap{
+    position:fixed; inset:0; z-index:62; display:none; align-items:flex-start; justify-content:center;
+    overflow-y:auto; padding:40px 16px;
+  }
+  .modal-wrap.open{display:flex;}
+  .modal{
+    background:var(--surface); border-radius:20px; max-width:520px; width:100%; box-shadow:var(--shadow);
+    padding:26px 24px 24px;
+  }
+  .modal h3{margin:0 0 4px;}
+  .modal .sub{color:var(--text-muted); font-size:.86rem; margin:0 0 18px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:.82rem; font-weight:600; margin-bottom:6px;}
+  .field input, .field textarea{
+    width:100%; border:1px solid var(--border); background:var(--bg); color:var(--text);
+    border-radius:10px; padding:10px 12px; font-family:inherit; font-size:.92rem;
+  }
+  .field textarea{resize:vertical; min-height:60px;}
+  .order-summary{background:var(--bg); border-radius:14px; padding:14px 16px; margin:16px 0; font-size:.86rem;}
+  .order-summary .row{display:flex; justify-content:space-between; margin-bottom:4px;}
+  .order-summary .total{font-weight:800; font-size:1rem; border-top:1px solid var(--border); margin-top:8px; padding-top:8px;}
+
+  .pay-methods{display:grid; gap:10px; margin:16px 0;}
+  .pay-card{
+    border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;
+  }
+  .pay-card div{font-size:.84rem;}
+  .pay-card strong{display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:2px;}
+  .pay-card .val{font-weight:700; font-size:.98rem;}
+  .copy-btn{
+    border:1px solid var(--border); background:var(--bg); border-radius:8px; padding:6px 10px; font-size:.75rem;
+    cursor:pointer; font-family:inherit; color:var(--text); white-space:nowrap;
+  }
+  .note-box{
+    background: color-mix(in srgb, var(--accent) 12%, transparent); border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius:12px; padding:12px 14px; font-size:.8rem; color:var(--text); margin-bottom:16px;
+  }
+  .toast{
+    position:fixed; bottom:90px; right:20px; background:var(--brand-dark); color:#fff; padding:10px 18px;
+    border-radius:10px; font-size:.85rem; z-index:70; opacity:0; transform:translateY(10px); transition:all .25s ease; pointer-events:none;
+  }
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  [hidden]{display:none!important;}
+
+  .pay-divider{display:flex; align-items:center; gap:10px; margin:18px 0 14px; color:var(--text-muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;}
+  .pay-divider::before, .pay-divider::after{content:""; flex:1; height:1px; background:var(--border);}
+  #boldBtnHost{margin-bottom:10px;}
+  .pay-online-note{font-size:.78rem; color:var(--text-muted); text-align:center; margin:-4px 0 14px;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap header-row">
+    <a href="#top" class="logo-link">
+      <img src="logo.jpg" alt="YO Amor Propio">
+      <span>YO <span class="brand-script" style="font-size:1.2em; color:var(--accent);">Amor Propio</span></span>
+    </a>
+    <nav class="main-nav" id="mainNav">
+      <a href="#productos">Productos</a>
+      <a href="#como-comprar">Cómo comprar</a>
+      <a href="#distribuidoras">Sé distribuidora</a>
+      <a href="#contacto">Contacto</a>
+    </nav>
+    <div class="header-actions">
+      <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
+      <button class="icon-btn" id="cartBtn" aria-label="Carrito">
+        🛍️<span class="badge" id="cartBadge" hidden>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="wrap hero">
+    <div>
+      <h1>Elige lo que te hace bien, <em>elige YO</em>.</h1>
+      <p>Bebidas funcionales e ingredientes naturales para tu energía, tu descanso, tu piel y tu metabolismo. Nutre tu cuerpo, eleva tu energía, fortalece tu bienestar.</p>
+      <div class="hero-ctas">
+        <a href="#productos" class="btn btn-primary">Ver productos</a>
+        <a href="#como-comprar" class="btn btn-outline">Cómo comprar</a>
+      </div>
+    </div>
+    <div class="hero-img-wrap">
+      <img src="product-1.jpg" alt="Línea de productos YO Amor Propio">
+    </div>
+  </section>
+
+  <div class="trust-bar">
+    <div class="wrap trust-grid">
+      <div class="trust-item"><strong>🌿 Ingredientes naturales</strong>Sin rellenos innecesarios</div>
+      <div class="trust-item"><strong>💜 Bienestar integral</strong>Energía, descanso, piel y más</div>
+      <div class="trust-item"><strong>🛡️ Fórmulas de calidad</strong>Registro sanitario INVIMA</div>
+      <div class="trust-item"><strong>❤️ Amor propio</strong>Todos los días</div>
+    </div>
+  </div>
+
+  <section class="section wrap" id="productos">
+    <div class="section-head">
+      <div class="kicker">Nuestra línea</div>
+      <h2>Productos YO</h2>
+      <p>Cuatro fórmulas pensadas para distintos momentos de tu día. Envíos a toda Colombia.</p>
+    </div>
+    <div class="products-grid" id="productsGrid"></div>
+  </section>
+
+  <section class="section wrap" id="como-comprar">
+    <div class="section-head">
+      <div class="kicker">Proceso</div>
+      <h2>Cómo comprar</h2>
+      <p>Así de simple es hacer tu pedido y recibirlo en la puerta de tu casa.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h4>Elige tus productos</h4><p>Agrega al carrito lo que quieras probar.</p></div>
+      <div class="step"><div class="step-num">2</div><h4>Completa tus datos</h4><p>Nombre, dirección y ciudad para el envío.</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Realiza el pago</h4><p>Nequi, Daviplata o transferencia bancaria.</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Envía tu comprobante</h4><p>Lo confirmamos por WhatsApp y despachamos tu pedido.</p></div>
+    </div>
+  </section>
+
+  <section class="section wrap" id="distribuidoras">
+    <div class="distrib-banner">
+      <div>
+        <h3>¿Quieres generar tus propios ingresos?</h3>
+        <p>Sé distribuidora YO Amor Propio sin inversión inicial. Te enseñamos todo el proceso y ganas por cada venta.</p>
+      </div>
+      <a class="btn" id="distribBtn" target="_blank" rel="noopener">Quiero ser distribuidora</a>
+    </div>
+  </section>
+</main>
+
+<footer id="contacto">
+  <div class="wrap footer-grid">
+    <div>
+      <h4>YO Amor Propio</h4>
+      <p>Bebidas funcionales y suplementos de bienestar. Elige lo que te hace bien, elige YO.</p>
+    </div>
+    <div>
+      <h4>Contacto</h4>
+      <ul>
+        <li><a id="waFooterLink" target="_blank" rel="noopener">WhatsApp de pedidos</a></li>
+        <li>Envíos a toda Colombia</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Enlaces</h4>
+      <ul>
+        <li><a href="#productos">Productos</a></li>
+        <li><a href="#como-comprar">Cómo comprar</a></li>
+        <li><a href="#distribuidoras">Sé distribuidora</a></li>
+      </ul>
+    </div>
+  </div>
+  <p class="disclaimer">Estos productos son suplementos dietarios y no reemplazan una alimentación equilibrada. Consulta a tu médico si tienes alguna condición de salud. Elaborados bajo registro sanitario INVIMA.</p>
+  <div class="footer-bottom">© <span id="year"></span> YO Amor Propio · Todos los derechos reservados</div>
+</footer>
+
+<a href="#" id="floatWa" class="float-wa" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
+
+<!-- Cart drawer -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="cartDrawer" aria-label="Carrito de compras">
+  <div class="drawer-head">
+    <h3>Tu carrito</h3>
+    <button class="close-btn" id="closeCart">✕</button>
+  </div>
+  <div class="drawer-body" id="cartBody"></div>
+  <div class="drawer-foot" id="cartFoot" hidden>
+    <div class="cart-total-row"><span>Total</span><span id="cartTotal">$0</span></div>
+    <button class="btn btn-primary btn-block" id="goCheckout">Continuar con el pedido</button>
+  </div>
+</aside>
+
+<!-- Checkout modal -->
+<div class="modal-wrap" id="checkoutWrap">
+  <div class="modal">
+    <h3>Finalizar pedido</h3>
+    <p class="sub">Completa tus datos de envío para generar el pedido.</p>
+
+    <div class="field"><label for="cName">Nombre completo *</label><input id="cName" type="text" placeholder="Tu nombre"></div>
+    <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000"></div>
+    <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad"></div>
+    <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio"></div>
+    <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
+
+    <div class="order-summary" id="orderSummary"></div>
+
+    <div id="onlinePaySection" hidden>
+      <button class="btn btn-primary btn-block" id="payOnlineBtn">Pagar en línea ahora (tarjeta · PSE · Nequi)</button>
+      <p class="pay-online-note">Pago seguro procesado por Bold.</p>
+      <div id="boldBtnHost"></div>
+      <div class="pay-divider">o paga manualmente</div>
+    </div>
+
+    <div class="note-box">Realiza el pago con uno de los medios de abajo y envía el comprobante por WhatsApp para que despachemos tu pedido.</div>
+
+    <div class="pay-methods">
+      <div class="pay-card">
+        <div><strong>Nequi / Llave</strong><span class="val">52778861</span></div>
+        <button class="copy-btn" data-copy="52778861">Copiar</button>
+      </div>
+      <div class="pay-card">
+        <div><strong>Daviplata</strong><span class="val">3115259789</span></div>
+        <button class="copy-btn" data-copy="3115259789">Copiar</button>
+      </div>
+      <div class="pay-card">
+        <div><strong>Davivienda · Ahorros</strong><span class="val">456500059345</span></div>
+        <button class="copy-btn" data-copy="456500059345">Copiar</button>
+      </div>
+      <div class="pay-card">
+        <div><strong>Titular</strong><span class="val" style="font-weight:600; font-size:.85rem;">Sandra Isabel González</span></div>
+      </div>
+    </div>
+
+    <button class="btn btn-accent btn-block" id="sendOrder">Enviar pedido por WhatsApp</button>
+    <button class="btn btn-ghost btn-block" id="cancelCheckout" style="margin-top:10px;">Volver al carrito</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Copiado</div>
+
+<script>
+(function(){
+  var WHATSAPP_NUMBER = "573209234733";
+
+  // Llave de identidad (PÚBLICA) de Bold. Pégala aquí cuando la tengas -> ej: "M-xxxxxxxxxxxx"
+  // Mientras esté vacía, el botón de pago en línea permanece oculto y solo se ofrece el pago manual.
+  var BOLD_API_KEY = "";
+  var currentOrderId = null;
+
+  var PRODUCTS = [
+    {
+      id:"yo-dia", name:"YO Día", line:"MaxPlus", color:"var(--dia)", img:"product-2.jpg",
+      tagline:"Empieza tu día con más fuerza, sabor y vitalidad.", price:60000,
+      presentacion:"Bebida con soya y jugo · Sabor naranja · 480 ml · 25 porciones",
+      ingredientes:["Maca","Borojó","Chontaduro"],
+      beneficios:["Energía natural para comenzar el día","Apoya tu vitalidad y rendimiento diario","Aporta nutrientes y antioxidantes naturales","Favorece el bienestar y equilibrio del organismo"]
+    },
+    {
+      id:"yo-noche", name:"YO Noche", line:"Naturalive", color:"var(--noche)", img:"product-3.jpg",
+      tagline:"Un sorbo de tranquilidad antes de dormir.", price:60000,
+      presentacion:"Bebida con soya · Sabor manzana lulada · 480 ml · 25 porciones",
+      ingredientes:["Cidrón","Toronjil","Manzanilla","Cilantro","Soya"],
+      beneficios:["Relajación natural","Bienestar y tranquilidad","Apoyo digestivo","Antioxidantes naturales"]
+    },
+    {
+      id:"yo-rejuvenezco", name:"YO Rejuvenezco", line:"Resveratrol", color:"var(--rejuv)", img:"product-4.jpg",
+      tagline:"Rejuvenece, brilla y siéntete increíble.", price:60000,
+      presentacion:"Bebida con soya · Sabor uva · 500 ml (16.9 fl oz) · 16 porciones",
+      ingredientes:["Uva","Semilla de uva","Açaí","Colágeno","Biotina"],
+      beneficios:["Piel más saludable","Cabello y uñas fuertes","Acción antioxidante","Belleza desde adentro"]
+    },
+    {
+      id:"yo-fit", name:"YO Fit", line:"TeaPlus", color:"var(--fit)", img:"product-5.jpg",
+      tagline:"Activa tu mejor versión de forma natural.", price:70000,
+      presentacion:"Alimento en polvo a base de maltodextrina · Sabor manzana verde · 300 g · 20 porciones",
+      ingredientes:["Té verde","Alcachofa","Durazno","Manzanilla","Jengibre","Apio"],
+      beneficios:["Apoya tu metabolismo","Favorece la digestión","Aporta antioxidantes","Promueve bienestar integral"]
+    }
+  ];
+
+  function fmt(n){
+    try{ return "$" + Number(n).toLocaleString("es-CO"); }catch(e){ return "$" + n; }
+  }
+
+  function loadCart(){
+    try{
+      var raw = localStorage.getItem("yoap_cart");
+      return raw ? JSON.parse(raw) : {};
+    }catch(e){ return {}; }
+  }
+  function saveCart(cart){
+    try{ localStorage.setItem("yoap_cart", JSON.stringify(cart)); }catch(e){}
+  }
+
+  var cart = loadCart();
+
+  function productsGridHtml(){
+    return PRODUCTS.map(function(p){
+      return (
+        '<div class="card" data-id="'+p.id+'">' +
+          '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'">' +
+          '<div class="card-body">' +
+            '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
+            '<h3>'+p.name+'</h3>' +
+            '<p class="tagline">'+p.tagline+'</p>' +
+            '<div class="price">'+fmt(p.price)+'</div>' +
+            '<div class="card-actions">' +
+              '<button class="btn btn-primary btn-sm" data-add="'+p.id+'" style="flex:1;">Agregar al carrito</button>' +
+            '</div>' +
+            '<button class="details-toggle" data-toggle="'+p.id+'">Ver ingredientes y beneficios ▾</button>' +
+          '</div>' +
+          '<div class="details-panel" id="details-'+p.id+'">' +
+            '<div>'+p.presentacion+'</div>' +
+            '<h4>Ingredientes clave</h4>' +
+            '<ul>'+p.ingredientes.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>' +
+            '<h4>Beneficios</h4>' +
+            '<ul>'+p.beneficios.map(function(i){return '<li>'+i+'</li>';}).join('')+'</ul>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  document.getElementById('productsGrid').innerHTML = productsGridHtml();
+
+  document.getElementById('productsGrid').addEventListener('click', function(e){
+    var toggleId = e.target.getAttribute('data-toggle');
+    if(toggleId){
+      var panel = document.getElementById('details-'+toggleId);
+      if(panel) panel.classList.toggle('open');
+      return;
+    }
+    var addId = e.target.getAttribute('data-add');
+    if(addId){
+      cart[addId] = (cart[addId] || 0) + 1;
+      saveCart(cart);
+      renderCart();
+      showToast('Agregado al carrito');
+    }
+  });
+
+  function productById(id){
+    for(var i=0;i<PRODUCTS.length;i++){ if(PRODUCTS[i].id===id) return PRODUCTS[i]; }
+    return null;
+  }
+
+  function cartCount(){
+    var n=0; for(var k in cart){ n += cart[k]; } return n;
+  }
+  function cartTotal(){
+    var t=0; for(var k in cart){ var p=productById(k); if(p) t += p.price*cart[k]; } return t;
+  }
+
+  function renderCart(){
+    var count = cartCount();
+    var badge = document.getElementById('cartBadge');
+    badge.textContent = count;
+    badge.hidden = count===0;
+
+    var body = document.getElementById('cartBody');
+    var foot = document.getElementById('cartFoot');
+    var keys = Object.keys(cart).filter(function(k){ return cart[k] > 0; });
+
+    if(keys.length===0){
+      body.innerHTML = '<div class="cart-empty">Tu carrito está vacío.<br>Explora nuestros productos ✨</div>';
+      foot.hidden = true;
+      return;
+    }
+    foot.hidden = false;
+    body.innerHTML = keys.map(function(k){
+      var p = productById(k);
+      if(!p) return '';
+      return (
+        '<div class="cart-item">' +
+          '<img src="'+p.img+'" alt="'+p.name+'">' +
+          '<div class="cart-item-info">' +
+            '<h5>'+p.name+'</h5>' +
+            '<div class="cart-item-price">'+fmt(p.price)+' c/u</div>' +
+            '<div class="qty-row">' +
+              '<button class="qty-btn" data-dec="'+k+'">−</button>' +
+              '<span>'+cart[k]+'</span>' +
+              '<button class="qty-btn" data-inc="'+k+'">+</button>' +
+              '<button class="remove-link" data-remove="'+k+'">Quitar</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>'
+      );
+    }).join('');
+    document.getElementById('cartTotal').textContent = fmt(cartTotal());
+  }
+
+  document.getElementById('cartBody').addEventListener('click', function(e){
+    var inc = e.target.getAttribute('data-inc');
+    var dec = e.target.getAttribute('data-dec');
+    var rem = e.target.getAttribute('data-remove');
+    if(inc){ cart[inc] = (cart[inc]||0)+1; }
+    if(dec){ cart[dec] = Math.max(0,(cart[dec]||0)-1); if(cart[dec]===0) delete cart[dec]; }
+    if(rem){ delete cart[rem]; }
+    if(inc||dec||rem){ saveCart(cart); renderCart(); }
+  });
+
+  // Drawer open/close
+  var overlay = document.getElementById('overlay');
+  var cartDrawer = document.getElementById('cartDrawer');
+  function openCart(){ cartDrawer.classList.add('open'); overlay.classList.add('open'); }
+  function closeCart(){ cartDrawer.classList.remove('open'); overlay.classList.remove('open'); }
+  document.getElementById('cartBtn').addEventListener('click', openCart);
+  document.getElementById('closeCart').addEventListener('click', closeCart);
+  overlay.addEventListener('click', function(){ closeCart(); closeCheckout(); });
+
+  // Mobile nav
+  var nav = document.getElementById('mainNav');
+  document.getElementById('menuToggle').addEventListener('click', function(){
+    nav.classList.toggle('open');
+  });
+  nav.addEventListener('click', function(e){
+    if(e.target.tagName==='A') nav.classList.remove('open');
+  });
+
+  // Checkout modal
+  var checkoutWrap = document.getElementById('checkoutWrap');
+  function openCheckout(){
+    if(cartCount()===0) return;
+    renderOrderSummary();
+    prepareOnlinePay();
+    closeCart();
+    checkoutWrap.classList.add('open');
+    overlay.classList.add('open');
+  }
+
+  function prepareOnlinePay(){
+    var section = document.getElementById('onlinePaySection');
+    var host = document.getElementById('boldBtnHost');
+    host.innerHTML = '';
+    if(!BOLD_API_KEY){
+      section.hidden = true;
+      return;
+    }
+    section.hidden = false;
+    currentOrderId = 'YOAP-' + Date.now();
+    var btn = document.getElementById('payOnlineBtn');
+    btn.disabled = false;
+    btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
+  }
+
+  document.getElementById('payOnlineBtn').addEventListener('click', function(){
+    var btn = this;
+    var amount = cartTotal();
+    if(!amount || !currentOrderId) return;
+
+    btn.disabled = true;
+    btn.textContent = 'Preparando pago seguro...';
+
+    fetch('/api/bold-signature', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ orderId: currentOrderId, amount: amount, currency: 'COP' })
+    })
+    .then(function(r){
+      if(!r.ok) throw new Error('signature_error');
+      return r.json();
+    })
+    .then(function(data){
+      var host = document.getElementById('boldBtnHost');
+      host.innerHTML = '';
+      var s = document.createElement('script');
+      s.setAttribute('data-bold-button', 'dark-L');
+      s.setAttribute('data-order-id', currentOrderId);
+      s.setAttribute('data-currency', 'COP');
+      s.setAttribute('data-amount', String(amount));
+      s.setAttribute('data-api-key', BOLD_API_KEY);
+      s.setAttribute('data-integrity-signature', data.signature);
+      s.setAttribute('data-description', 'Pedido YO Amor Propio ' + currentOrderId);
+      s.setAttribute('data-redirection-url', window.location.origin + window.location.pathname + '?pedido=' + currentOrderId);
+      host.appendChild(s);
+      btn.hidden = true;
+      showToast('Listo, haz clic en el botón de pago que apareció abajo');
+    })
+    .catch(function(){
+      showToast('No se pudo iniciar el pago en línea. Intenta con el pago manual.');
+      btn.disabled = false;
+      btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
+    });
+  });
+  function closeCheckout(){ checkoutWrap.classList.remove('open'); overlay.classList.remove('open'); }
+  document.getElementById('goCheckout').addEventListener('click', openCheckout);
+  document.getElementById('cancelCheckout').addEventListener('click', function(){ closeCheckout(); openCart(); });
+
+  function renderOrderSummary(){
+    var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
+    var html = keys.map(function(k){
+      var p = productById(k);
+      return '<div class="row"><span>'+p.name+' × '+cart[k]+'</span><span>'+fmt(p.price*cart[k])+'</span></div>';
+    }).join('');
+    html += '<div class="row total"><span>Total</span><span>'+fmt(cartTotal())+'</span></div>';
+    document.getElementById('orderSummary').innerHTML = html;
+  }
+
+  // Copy buttons
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var val = btn.getAttribute('data-copy');
+      try{
+        navigator.clipboard.writeText(val);
+        showToast('Copiado: '+val);
+      }catch(e){ showToast(val); }
+    });
+  });
+
+  function showToast(msg){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._timer);
+    t._timer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
+  }
+
+  // Send order via WhatsApp
+  document.getElementById('sendOrder').addEventListener('click', function(){
+    var name = document.getElementById('cName').value.trim();
+    var phone = document.getElementById('cPhone').value.trim();
+    var city = document.getElementById('cCity').value.trim();
+    var address = document.getElementById('cAddress').value.trim();
+    var notes = document.getElementById('cNotes').value.trim();
+
+    if(!name || !phone || !city || !address){
+      showToast('Completa los campos obligatorios (*)');
+      return;
+    }
+
+    var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
+    if(keys.length===0){ return; }
+
+    var lines = [];
+    lines.push('¡Hola! Quiero hacer un pedido YO Amor Propio 🧡');
+    lines.push('');
+    lines.push('*Productos:*');
+    keys.forEach(function(k){
+      var p = productById(k);
+      lines.push('- '+p.name+' x'+cart[k]+' = '+fmt(p.price*cart[k]));
+    });
+    lines.push('*Total: '+fmt(cartTotal())+'*');
+    lines.push('');
+    lines.push('*Datos de envío:*');
+    lines.push('Nombre: '+name);
+    lines.push('Teléfono: '+phone);
+    lines.push('Ciudad: '+city);
+    lines.push('Dirección: '+address);
+    if(notes) lines.push('Notas: '+notes);
+    lines.push('');
+    lines.push('Adjunto el comprobante de pago a continuación.');
+
+    var text = encodeURIComponent(lines.join('\n'));
+    var url = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+text;
+    window.open(url, '_blank');
+
+    cart = {};
+    saveCart(cart);
+    renderCart();
+    closeCheckout();
+    showToast('Pedido enviado. ¡Gracias por tu compra!');
+  });
+
+  // Links needing the WA number
+  var waUrl = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent('¡Hola! Quiero más información sobre YO Amor Propio.');
+  document.getElementById('floatWa').href = waUrl;
+  document.getElementById('waFooterLink').href = waUrl;
+  document.getElementById('distribBtn').href = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent('¡Hola! Quiero información para ser distribuidora de YO Amor Propio.');
+
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  renderCart();
+})();
+</script>
+</body>
+</html>
