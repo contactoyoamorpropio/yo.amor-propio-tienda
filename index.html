@@ -695,8 +695,6 @@
 
   function prepareOnlinePay(){
     var section = document.getElementById('onlinePaySection');
-    var host = document.getElementById('boldBtnHost');
-    host.innerHTML = '';
     if(!BOLD_API_KEY){
       section.hidden = true;
       return;
@@ -726,20 +724,21 @@
       return r.json();
     })
     .then(function(data){
-      var host = document.getElementById('boldBtnHost');
-      host.innerHTML = '';
-      var s = document.createElement('script');
-      s.setAttribute('data-bold-button', 'dark-L');
-      s.setAttribute('data-order-id', currentOrderId);
-      s.setAttribute('data-currency', 'COP');
-      s.setAttribute('data-amount', String(amount));
-      s.setAttribute('data-api-key', BOLD_API_KEY);
-      s.setAttribute('data-integrity-signature', data.signature);
-      s.setAttribute('data-description', 'Pedido YO Amor Propio ' + currentOrderId);
-      s.setAttribute('data-redirection-url', window.location.origin + window.location.pathname + '?pedido=' + currentOrderId);
-      host.appendChild(s);
-      btn.hidden = true;
-      showToast('Listo, haz clic en el botón de pago que apareció abajo');
+      if(typeof window.BoldCheckout !== 'function'){
+        throw new Error('bold_lib_not_loaded');
+      }
+      var checkout = new window.BoldCheckout({
+        orderId: currentOrderId,
+        currency: 'COP',
+        amount: String(amount),
+        apiKey: BOLD_API_KEY,
+        integritySignature: data.signature,
+        description: 'Pedido YO Amor Propio ' + currentOrderId,
+        redirectionUrl: window.location.origin + window.location.pathname + '?pedido=' + currentOrderId
+      });
+      checkout.open();
+      btn.disabled = false;
+      btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
     })
     .catch(function(){
       showToast('No se pudo iniciar el pago en línea. Intenta con el pago manual.');
