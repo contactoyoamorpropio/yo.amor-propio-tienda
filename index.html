@@ -616,6 +616,72 @@
     var t=0; for(var k in cart){ var p=productById(k); if(p) t += p.price*cart[k]; } return t;
   }
 
+  function getCustomerFields(){
+    return {
+      name: document.getElementById('cName').value.trim(),
+      phone: document.getElementById('cPhone').value.trim(),
+      city: document.getElementById('cCity').value.trim(),
+      address: document.getElementById('cAddress').value.trim(),
+      notes: document.getElementById('cNotes').value.trim()
+    };
+  }
+
+  function productsSummaryText(){
+    var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
+    return keys.map(function(k){
+      var p = productById(k);
+      return p ? (p.name+' x'+cart[k]) : '';
+    }).filter(Boolean).join(', ');
+  }
+
+  // Envía los datos del pedido a la hoja de cálculo (vía la función serverless
+  // /api/log-order, que reenvía a Google Sheets). No bloquea la compra si falla.
+  function logOrder(payload){
+    try{
+      fetch('/api/log-order', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      }).catch(function(){});
+    }catch(e){}
+  }
+
+  // Si Bold nos redirige de vuelta con ?pedido=ID tras un pago exitoso,
+  // recuperamos los datos guardados antes de salir y los registramos.
+  function checkReturnFromBold(){
+    var params = new URLSearchParams(window.location.search);
+    var pedido = params.get('pedido');
+    if(!pedido) return;
+
+    var pending = null;
+    try{
+      var raw = localStorage.getItem('yoap_pending_order');
+      if(raw) pending = JSON.parse(raw);
+    }catch(e){ pending = null; }
+
+    if(pending && pending.orderId === pedido){
+      logOrder({
+        orderId: pending.orderId,
+        metodoPago: 'Pago en línea (Bold)',
+        nombre: pending.nombre,
+        telefono: pending.telefono,
+        ciudad: pending.ciudad,
+        direccion: pending.direccion,
+        notas: pending.notas,
+        productos: pending.productos,
+        total: pending.total
+      });
+      try{ localStorage.removeItem('yoap_pending_order'); }catch(e){}
+      cart = {};
+      saveCart(cart);
+      renderCart();
+      showToast('¡Pago recibido! Gracias por tu compra 💜');
+    }
+
+    var cleanUrl = window.location.origin + window.location.pathname;
+    window.history.replaceState({}, document.title, cleanUrl);
+  }
+
   function renderCart(){
     var count = cartCount();
     var badge = document.getElementById('cartBadge');
@@ -711,6 +777,12 @@
     var amount = cartTotal();
     if(!amount || !currentOrderId) return;
 
+    var cf = getCustomerFields();
+    if(!cf.name || !cf.phone || !cf.city || !cf.address){
+      showToast('Completa los campos obligatorios (*) antes de pagar');
+      return;
+    }
+
     btn.disabled = true;
     btn.textContent = 'Preparando pago seguro...';
 
@@ -727,6 +799,22 @@
       if(typeof window.BoldCheckout !== 'function'){
         throw new Error('bold_lib_not_loaded');
       }
+
+      // Guarda los datos del pedido para poder registrarlo en la hoja de cálculo
+      // cuando Bold nos devuelva al sitio tras un pago exitoso.
+      try{
+        localStorage.setItem('yoap_pending_order', JSON.stringify({
+          orderId: currentOrderId,
+          nombre: cf.name,
+          telefono: cf.phone,
+          ciudad: cf.city,
+          direccion: cf.address,
+          notas: cf.notes,
+          productos: productsSummaryText(),
+          total: fmt(amount)
+        }));
+      }catch(e){}
+
       var checkout = new window.BoldCheckout({
         orderId: currentOrderId,
         currency: 'COP',
@@ -818,6 +906,18 @@
     var url = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+text;
     window.open(url, '_blank');
 
+    logOrder({
+      orderId: 'MANUAL-' + Date.now(),
+      metodoPago: 'Manual (WhatsApp)',
+      nombre: name,
+      telefono: phone,
+      ciudad: city,
+      direccion: address,
+      notas: notes,
+      productos: productsSummaryText(),
+      total: fmt(cartTotal())
+    });
+
     cart = {};
     saveCart(cart);
     renderCart();
@@ -834,6 +934,7 @@
   document.getElementById('year').textContent = new Date().getFullYear();
 
   renderCart();
+  checkReturnFromBold();
 })();
 </script>
 </body>
