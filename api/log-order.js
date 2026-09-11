@@ -1,4 +1,4 @@
-javascript
+
 // Reenvía los datos de un pedido a la hoja de cálculo de Google Sheets, a través
 // de un Apps Script Web App. Así, ni la URL del script ni el secreto compartido
 // quedan expuestos en el navegador del cliente (solo este archivo, que corre en
