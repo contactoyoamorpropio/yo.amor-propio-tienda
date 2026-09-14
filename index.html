@@ -303,21 +303,6 @@
   .order-summary .row{display:flex; justify-content:space-between; margin-bottom:4px;}
   .order-summary .total{font-weight:800; font-size:1rem; border-top:1px solid var(--border); margin-top:8px; padding-top:8px;}
 
-  .pay-methods{display:grid; gap:10px; margin:16px 0;}
-  .pay-card{
-    border:1px solid var(--border); border-radius:12px; padding:10px 14px; display:flex; justify-content:space-between; align-items:center; gap:10px;
-  }
-  .pay-card div{font-size:.84rem;}
-  .pay-card strong{display:block; font-size:.7rem; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); margin-bottom:2px;}
-  .pay-card .val{font-weight:700; font-size:.98rem;}
-  .copy-btn{
-    border:1px solid var(--border); background:var(--bg); border-radius:8px; padding:6px 10px; font-size:.75rem;
-    cursor:pointer; font-family:inherit; color:var(--text); white-space:nowrap;
-  }
-  .note-box{
-    background: color-mix(in srgb, var(--accent) 12%, transparent); border:1px solid color-mix(in srgb, var(--accent) 30%, transparent);
-    border-radius:12px; padding:12px 14px; font-size:.8rem; color:var(--text); margin-bottom:16px;
-  }
   .toast{
     position:fixed; bottom:90px; right:20px; background:var(--brand-dark); color:#fff; padding:10px 18px;
     border-radius:10px; font-size:.85rem; z-index:70; opacity:0; transform:translateY(10px); transition:all .25s ease; pointer-events:none;
@@ -326,9 +311,6 @@
 
   [hidden]{display:none!important;}
 
-  .pay-divider{display:flex; align-items:center; gap:10px; margin:18px 0 14px; color:var(--text-muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em;}
-  .pay-divider::before, .pay-divider::after{content:""; flex:1; height:1px; background:var(--border);}
-  #boldBtnHost{margin-bottom:10px;}
   .pay-online-note{font-size:.78rem; color:var(--text-muted); text-align:center; margin:-4px 0 14px;}
 </style>
 </head>
@@ -397,8 +379,8 @@
     <div class="steps">
       <div class="step"><div class="step-num">1</div><h4>Elige tus productos</h4><p>Agrega al carrito lo que quieras probar.</p></div>
       <div class="step"><div class="step-num">2</div><h4>Completa tus datos</h4><p>Nombre, dirección y ciudad para el envío.</p></div>
-      <div class="step"><div class="step-num">3</div><h4>Realiza el pago</h4><p>Nequi, Daviplata o transferencia bancaria.</p></div>
-      <div class="step"><div class="step-num">4</div><h4>Envía tu comprobante</h4><p>Lo confirmamos por WhatsApp y despachamos tu pedido.</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Paga en línea y seguro</h4><p>Tarjeta, PSE o Nequi, procesado por Bold.</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Recibe tu pedido</h4><p>Confirmamos tu pago y despachamos a tu ciudad.</p></div>
     </div>
   </section>
 
@@ -469,34 +451,11 @@
 
     <div class="order-summary" id="orderSummary"></div>
 
-    <div id="onlinePaySection" hidden>
+    <div id="onlinePaySection">
       <button class="btn btn-primary btn-block" id="payOnlineBtn">Pagar en línea ahora (tarjeta · PSE · Nequi)</button>
-      <p class="pay-online-note">Pago seguro procesado por Bold.</p>
-      <div id="boldBtnHost"></div>
-      <div class="pay-divider">o paga manualmente</div>
+      <p class="pay-online-note">Pago 100% seguro procesado por Bold.</p>
     </div>
 
-    <div class="note-box">Realiza el pago con uno de los medios de abajo y envía el comprobante por WhatsApp para que despachemos tu pedido.</div>
-
-    <div class="pay-methods">
-      <div class="pay-card">
-        <div><strong>Nequi / Llave</strong><span class="val">52778861</span></div>
-        <button class="copy-btn" data-copy="52778861">Copiar</button>
-      </div>
-      <div class="pay-card">
-        <div><strong>Daviplata</strong><span class="val">3115259789</span></div>
-        <button class="copy-btn" data-copy="3115259789">Copiar</button>
-      </div>
-      <div class="pay-card">
-        <div><strong>Davivienda · Ahorros</strong><span class="val">456500059345</span></div>
-        <button class="copy-btn" data-copy="456500059345">Copiar</button>
-      </div>
-      <div class="pay-card">
-        <div><strong>Titular</strong><span class="val" style="font-weight:600; font-size:.85rem;">Sandra Isabel González</span></div>
-      </div>
-    </div>
-
-    <button class="btn btn-accent btn-block" id="sendOrder">Enviar pedido por WhatsApp</button>
     <button class="btn btn-ghost btn-block" id="cancelCheckout" style="margin-top:10px;">Volver al carrito</button>
   </div>
 </div>
@@ -760,14 +719,13 @@
   }
 
   function prepareOnlinePay(){
-    var section = document.getElementById('onlinePaySection');
+    var btn = document.getElementById('payOnlineBtn');
     if(!BOLD_API_KEY){
-      section.hidden = true;
+      btn.disabled = true;
+      btn.textContent = 'Pago en línea no disponible por ahora';
       return;
     }
-    section.hidden = false;
     currentOrderId = 'YOAP-' + Date.now();
-    var btn = document.getElementById('payOnlineBtn');
     btn.disabled = false;
     btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
   }
@@ -848,17 +806,6 @@
     document.getElementById('orderSummary').innerHTML = html;
   }
 
-  // Copy buttons
-  document.querySelectorAll('.copy-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var val = btn.getAttribute('data-copy');
-      try{
-        navigator.clipboard.writeText(val);
-        showToast('Copiado: '+val);
-      }catch(e){ showToast(val); }
-    });
-  });
-
   function showToast(msg){
     var t = document.getElementById('toast');
     t.textContent = msg;
@@ -866,64 +813,6 @@
     clearTimeout(t._timer);
     t._timer = setTimeout(function(){ t.classList.remove('show'); }, 1800);
   }
-
-  // Send order via WhatsApp
-  document.getElementById('sendOrder').addEventListener('click', function(){
-    var name = document.getElementById('cName').value.trim();
-    var phone = document.getElementById('cPhone').value.trim();
-    var city = document.getElementById('cCity').value.trim();
-    var address = document.getElementById('cAddress').value.trim();
-    var notes = document.getElementById('cNotes').value.trim();
-
-    if(!name || !phone || !city || !address){
-      showToast('Completa los campos obligatorios (*)');
-      return;
-    }
-
-    var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
-    if(keys.length===0){ return; }
-
-    var lines = [];
-    lines.push('¡Hola! Quiero hacer un pedido YO Amor Propio 🧡');
-    lines.push('');
-    lines.push('*Productos:*');
-    keys.forEach(function(k){
-      var p = productById(k);
-      lines.push('- '+p.name+' x'+cart[k]+' = '+fmt(p.price*cart[k]));
-    });
-    lines.push('*Total: '+fmt(cartTotal())+'*');
-    lines.push('');
-    lines.push('*Datos de envío:*');
-    lines.push('Nombre: '+name);
-    lines.push('Teléfono: '+phone);
-    lines.push('Ciudad: '+city);
-    lines.push('Dirección: '+address);
-    if(notes) lines.push('Notas: '+notes);
-    lines.push('');
-    lines.push('Adjunto el comprobante de pago a continuación.');
-
-    var text = encodeURIComponent(lines.join('\n'));
-    var url = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+text;
-    window.open(url, '_blank');
-
-    logOrder({
-      orderId: 'MANUAL-' + Date.now(),
-      metodoPago: 'Manual (WhatsApp)',
-      nombre: name,
-      telefono: phone,
-      ciudad: city,
-      direccion: address,
-      notas: notes,
-      productos: productsSummaryText(),
-      total: fmt(cartTotal())
-    });
-
-    cart = {};
-    saveCart(cart);
-    renderCart();
-    closeCheckout();
-    showToast('Pedido enviado. ¡Gracias por tu compra!');
-  });
 
   // Links needing the WA number
   var waUrl = 'https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent('¡Hola! Quiero más información sobre YO Amor Propio.');
