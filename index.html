@@ -447,6 +447,7 @@
     <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000"></div>
     <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad"></div>
     <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio"></div>
+    <div class="field"><label for="cPostalCode">Código postal *</label><input id="cPostalCode" type="text" inputmode="numeric" placeholder="Ej: 110221"></div>
     <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
 
     <div class="order-summary" id="orderSummary"></div>
@@ -581,6 +582,7 @@
       phone: document.getElementById('cPhone').value.trim(),
       city: document.getElementById('cCity').value.trim(),
       address: document.getElementById('cAddress').value.trim(),
+      postalCode: document.getElementById('cPostalCode').value.trim(),
       notes: document.getElementById('cNotes').value.trim()
     };
   }
@@ -626,6 +628,7 @@
         telefono: pending.telefono,
         ciudad: pending.ciudad,
         direccion: pending.direccion,
+        codigoPostal: pending.codigoPostal,
         notas: pending.notas,
         productos: pending.productos,
         total: pending.total
@@ -736,7 +739,7 @@
     if(!amount || !currentOrderId) return;
 
     var cf = getCustomerFields();
-    if(!cf.name || !cf.phone || !cf.city || !cf.address){
+    if(!cf.name || !cf.phone || !cf.city || !cf.address || !cf.postalCode){
       showToast('Completa los campos obligatorios (*) antes de pagar');
       return;
     }
@@ -767,6 +770,7 @@
           telefono: cf.phone,
           ciudad: cf.city,
           direccion: cf.address,
+          codigoPostal: cf.postalCode,
           notas: cf.notes,
           productos: productsSummaryText(),
           total: fmt(amount)
