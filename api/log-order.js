@@ -1,4 +1,3 @@
-
 // Reenvía los datos de un pedido a la hoja de cálculo de Google Sheets, a través
 // de un Apps Script Web App. Así, ni la URL del script ni el secreto compartido
 // quedan expuestos en el navegador del cliente (solo este archivo, que corre en
@@ -33,6 +32,7 @@ module.exports = async (req, res) => {
       telefono: String(body.telefono || '').slice(0, 40),
       ciudad: String(body.ciudad || '').slice(0, 80),
       direccion: String(body.direccion || '').slice(0, 200),
+      codigoPostal: String(body.codigoPostal || '').slice(0, 20),
       notas: String(body.notas || '').slice(0, 300),
       productos: String(body.productos || '').slice(0, 500),
       total: String(body.total || '').slice(0, 30)
