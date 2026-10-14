@@ -140,6 +140,11 @@
     background:#fff; color:var(--brand-dark); font-weight:700; font-size:.8rem;
     padding:5px 14px; border-radius:999px; text-decoration:none; white-space:nowrap;
   }
+  .promo-image-wrap{
+    display:block; border-radius:26px; overflow:hidden; box-shadow:var(--shadow);
+    max-width:460px; margin:0 auto;
+  }
+  .promo-image-wrap img{width:100%; display:block;}
 
   /* Hero */
   .hero{
@@ -389,6 +394,12 @@
     </div>
   </div>
 
+  <section class="wrap" id="promoImageSection" hidden style="padding-block:32px 0;">
+    <a href="#card-yo-noche" class="promo-image-wrap">
+      <img src="promo-yo-noche.jpg" alt="Promo de octubre: YO Noche 20% OFF + envío gratis">
+    </a>
+  </section>
+
   <section class="section wrap" id="productos">
     <div class="section-head">
       <div class="kicker">Nuestra línea</div>
@@ -597,8 +608,10 @@
   document.getElementById('productsGrid').innerHTML = productsGridHtml();
 
   var promoBar = document.getElementById('promoBar');
-  if(promoBar && PRODUCTS.some(onPromo)){
-    promoBar.hidden = false;
+  var promoImageSection = document.getElementById('promoImageSection');
+  if(PRODUCTS.some(onPromo)){
+    if(promoBar) promoBar.hidden = false;
+    if(promoImageSection) promoImageSection.hidden = false;
   }
 
   document.getElementById('productsGrid').addEventListener('click', function(e){
