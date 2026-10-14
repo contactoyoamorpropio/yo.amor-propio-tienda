@@ -126,6 +126,21 @@
   .btn[disabled]{opacity:.5; cursor:not-allowed;}
   .btn-sm{padding:8px 16px; font-size:.85rem;}
 
+  /* Promo bar */
+  .promo-bar{
+    background:linear-gradient(135deg, var(--noche), var(--brand));
+    color:#fff;
+  }
+  .promo-bar-inner{
+    display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+    padding-block:10px; font-size:.88rem; text-align:center;
+  }
+  .promo-bar-inner strong{font-weight:800;}
+  .promo-bar-link{
+    background:#fff; color:var(--brand-dark); font-weight:700; font-size:.8rem;
+    padding:5px 14px; border-radius:999px; text-decoration:none; white-space:nowrap;
+  }
+
   /* Hero */
   .hero{
     padding-block: 54px 40px;
@@ -188,7 +203,13 @@
   }
   .card h3{margin:2px 0 0; font-size:1.15rem; font-weight:700;}
   .card .tagline{color:var(--text-muted); font-size:.86rem; margin:0; min-height:2.6em;}
-  .card .price{font-size:1.25rem; font-weight:800; color:var(--brand); margin:4px 0 2px;}
+  .price-row{display:flex; align-items:baseline; gap:8px; margin:4px 0 0;}
+  .price-original{font-size:.9rem; color:var(--text-muted); text-decoration:line-through;}
+  .card .price{font-size:1.25rem; font-weight:800; color:var(--brand); margin:0 0 2px;}
+  .promo-badge{
+    display:inline-block; background:var(--accent); color:#fff; font-size:.7rem; font-weight:700;
+    padding:3px 10px; border-radius:999px; width:fit-content;
+  }
   .card-actions{display:flex; gap:8px; margin-top:6px;}
   .details-toggle{
     background:none; border:none; color:var(--brand); font-weight:600; font-size:.85rem; cursor:pointer;
@@ -337,6 +358,13 @@
   </div>
 </header>
 
+<div class="promo-bar" id="promoBar" hidden>
+  <div class="wrap promo-bar-inner">
+    <span>🌙 <strong>Promo de octubre:</strong> YO Noche con 20% OFF + envío gratis</span>
+    <a href="#card-yo-noche" class="promo-bar-link">Ver oferta</a>
+  </div>
+</div>
+
 <main id="top">
   <section class="wrap hero">
     <div>
@@ -447,7 +475,6 @@
     <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000"></div>
     <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad"></div>
     <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio"></div>
-    <div class="field"><label for="cPostalCode">Código postal *</label><input id="cPostalCode" type="text" inputmode="numeric" placeholder="Ej: 110221"></div>
     <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
 
     <div class="order-summary" id="orderSummary"></div>
@@ -483,6 +510,7 @@
     {
       id:"yo-noche", name:"YO Noche", line:"Naturalive", color:"var(--noche)", img:"product-3.jpg",
       tagline:"Un sorbo de tranquilidad antes de dormir.", price:60000,
+      promoPrice:48000, promoUntil:"2026-10-31", promoLabel:"20% OFF · Octubre",
       presentacion:"Bebida con soya · Sabor manzana lulada · 480 ml · 25 porciones",
       ingredientes:["Cidrón","Toronjil","Manzanilla","Cilantro","Soya"],
       beneficios:["Relajación natural","Bienestar y tranquilidad","Apoyo digestivo","Antioxidantes naturales"]
@@ -507,6 +535,20 @@
     try{ return "$" + Number(n).toLocaleString("es-CO"); }catch(e){ return "$" + n; }
   }
 
+  // Si el producto tiene promoPrice y la fecha de hoy no supera promoUntil,
+  // ese es el precio vigente; si no, se usa el precio normal. Al pasar la
+  // fecha, el precio (y el badge) vuelven solos a la normalidad.
+  function effectivePrice(p){
+    if(p.promoPrice && p.promoUntil){
+      var until = new Date(p.promoUntil + "T23:59:59-05:00");
+      if(new Date() <= until) return p.promoPrice;
+    }
+    return p.price;
+  }
+  function onPromo(p){
+    return effectivePrice(p) !== p.price;
+  }
+
   function loadCart(){
     try{
       var raw = localStorage.getItem("yoap_cart");
@@ -521,14 +563,20 @@
 
   function productsGridHtml(){
     return PRODUCTS.map(function(p){
+      var eff = effectivePrice(p);
+      var promo = onPromo(p);
       return (
-        '<div class="card" data-id="'+p.id+'">' +
+        '<div class="card" id="card-'+p.id+'" data-id="'+p.id+'">' +
           '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'">' +
           '<div class="card-body">' +
             '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
             '<h3>'+p.name+'</h3>' +
             '<p class="tagline">'+p.tagline+'</p>' +
-            '<div class="price">'+fmt(p.price)+'</div>' +
+            '<div class="price-row">' +
+              (promo ? '<span class="price-original">'+fmt(p.price)+'</span>' : '') +
+              '<span class="price">'+fmt(eff)+'</span>' +
+            '</div>' +
+            (promo ? '<span class="promo-badge">'+p.promoLabel+'</span>' : '') +
             '<div class="card-actions">' +
               '<button class="btn btn-primary btn-sm" data-add="'+p.id+'" style="flex:1;">Agregar al carrito</button>' +
             '</div>' +
@@ -547,6 +595,11 @@
   }
 
   document.getElementById('productsGrid').innerHTML = productsGridHtml();
+
+  var promoBar = document.getElementById('promoBar');
+  if(promoBar && PRODUCTS.some(onPromo)){
+    promoBar.hidden = false;
+  }
 
   document.getElementById('productsGrid').addEventListener('click', function(e){
     var toggleId = e.target.getAttribute('data-toggle');
@@ -573,7 +626,7 @@
     var n=0; for(var k in cart){ n += cart[k]; } return n;
   }
   function cartTotal(){
-    var t=0; for(var k in cart){ var p=productById(k); if(p) t += p.price*cart[k]; } return t;
+    var t=0; for(var k in cart){ var p=productById(k); if(p) t += effectivePrice(p)*cart[k]; } return t;
   }
 
   function getCustomerFields(){
@@ -582,7 +635,6 @@
       phone: document.getElementById('cPhone').value.trim(),
       city: document.getElementById('cCity').value.trim(),
       address: document.getElementById('cAddress').value.trim(),
-      postalCode: document.getElementById('cPostalCode').value.trim(),
       notes: document.getElementById('cNotes').value.trim()
     };
   }
@@ -628,7 +680,6 @@
         telefono: pending.telefono,
         ciudad: pending.ciudad,
         direccion: pending.direccion,
-        codigoPostal: pending.codigoPostal,
         notas: pending.notas,
         productos: pending.productos,
         total: pending.total
@@ -668,7 +719,7 @@
           '<img src="'+p.img+'" alt="'+p.name+'">' +
           '<div class="cart-item-info">' +
             '<h5>'+p.name+'</h5>' +
-            '<div class="cart-item-price">'+fmt(p.price)+' c/u</div>' +
+            '<div class="cart-item-price">'+fmt(effectivePrice(p))+' c/u</div>' +
             '<div class="qty-row">' +
               '<button class="qty-btn" data-dec="'+k+'">−</button>' +
               '<span>'+cart[k]+'</span>' +
@@ -739,7 +790,7 @@
     if(!amount || !currentOrderId) return;
 
     var cf = getCustomerFields();
-    if(!cf.name || !cf.phone || !cf.city || !cf.address || !cf.postalCode){
+    if(!cf.name || !cf.phone || !cf.city || !cf.address){
       showToast('Completa los campos obligatorios (*) antes de pagar');
       return;
     }
@@ -770,7 +821,6 @@
           telefono: cf.phone,
           ciudad: cf.city,
           direccion: cf.address,
-          codigoPostal: cf.postalCode,
           notas: cf.notes,
           productos: productsSummaryText(),
           total: fmt(amount)
@@ -804,7 +854,7 @@
     var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
     var html = keys.map(function(k){
       var p = productById(k);
-      return '<div class="row"><span>'+p.name+' × '+cart[k]+'</span><span>'+fmt(p.price*cart[k])+'</span></div>';
+      return '<div class="row"><span>'+p.name+' × '+cart[k]+'</span><span>'+fmt(effectivePrice(p)*cart[k])+'</span></div>';
     }).join('');
     html += '<div class="row total"><span>Total</span><span>'+fmt(cartTotal())+'</span></div>';
     document.getElementById('orderSummary').innerHTML = html;
