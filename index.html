@@ -13,10 +13,17 @@
   2. La LLAVE SECRETA nunca va aquí ni en ningún archivo de este proyecto: se configura como variable de entorno
      BOLD_SECRET_KEY en el panel de Vercel (Project Settings -> Environment Variables). La usa únicamente api/bold-signature.js.
   3. Mientras BOLD_API_KEY esté vacío, el botón de pago en línea se oculta automáticamente y solo se ofrece el pago manual.
+
+  RENDIMIENTO: el script de Bold se carga con "defer" (no bloquea el dibujado de la página) y las
+  tipografías se cargan como <link> con preconnect en vez de @import, para que los productos se
+  vean de inmediato al abrir la página en vez de aparecer después.
 -->
-<script src="https://checkout.bold.co/library/boldPaymentButton.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap">
+<link rel="preconnect" href="https://checkout.bold.co">
+<script src="https://checkout.bold.co/library/boldPaymentButton.js" defer></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap');
 
   :root{
     --brand:#6B2E7A;
@@ -196,9 +203,25 @@
   @media (max-width:980px){ .products-grid{grid-template-columns:1fr 1fr;} }
   @media (max-width:560px){ .products-grid{grid-template-columns:1fr;} }
 
+  @keyframes cardIn{
+    from{opacity:0; transform:translateY(18px);}
+    to{opacity:1; transform:translateY(0);}
+  }
   .card{
     background:var(--surface); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
     display:flex; flex-direction:column; border:1px solid var(--border);
+    transition: transform .22s ease, box-shadow .22s ease;
+    animation: cardIn .5s ease both;
+  }
+  .card:nth-child(1){animation-delay:.04s;}
+  .card:nth-child(2){animation-delay:.11s;}
+  .card:nth-child(3){animation-delay:.18s;}
+  .card:nth-child(4){animation-delay:.25s;}
+  @media (hover:hover){
+    .card:hover{transform:translateY(-6px); box-shadow:0 18px 36px rgba(75,25,70,.18);}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .card{animation:none;}
   }
   .card-img{width:100%; aspect-ratio:1/1; object-fit:cover; cursor:pointer;}
   .card-body{padding:16px 18px 20px; display:flex; flex-direction:column; gap:8px; flex:1;}
@@ -216,6 +239,7 @@
     padding:3px 10px; border-radius:999px; width:fit-content;
   }
   .card-actions{display:flex; gap:8px; margin-top:6px;}
+  .card-actions .btn{flex:1; padding-inline:10px; white-space:nowrap;}
   .details-toggle{
     background:none; border:none; color:var(--brand); font-weight:600; font-size:.85rem; cursor:pointer;
     text-decoration:underline; padding:0; text-align:left;
@@ -266,12 +290,27 @@
   }
   .disclaimer{font-size:.76rem; color:rgba(255,255,255,.55); max-width:70ch; margin:10px auto 0; text-align:center;}
 
+  /* Sticky mobile cart bar: ayuda a comprar más rápido sin tener que subir a buscar el carrito */
+  .mobile-cart-bar{
+    position:fixed; left:12px; right:12px; bottom:16px; z-index:46;
+    background:var(--brand-dark); color:#fff; border-radius:16px;
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 14px; box-shadow:0 10px 28px rgba(0,0,0,.28);
+  }
+  .mobile-cart-bar strong{font-size:.95rem;}
+  .mobile-cart-bar span{display:block; font-size:.74rem; opacity:.85;}
+  .mobile-cart-bar .btn{background:#fff; color:var(--brand-dark); white-space:nowrap;}
+  @media (min-width:821px){ .mobile-cart-bar{display:none;} }
+
   /* Floating WhatsApp */
   .float-wa{
     position:fixed; bottom:20px; right:20px; z-index:45;
     width:56px; height:56px; border-radius:999px; background:#25D366; color:#fff;
     display:flex; align-items:center; justify-content:center; box-shadow:0 10px 24px rgba(0,0,0,.25);
-    font-size:1.5rem; text-decoration:none;
+    font-size:1.5rem; text-decoration:none; transition:bottom .2s ease;
+  }
+  @media (max-width:820px){
+    body.has-mobile-cart-bar .float-wa{ bottom:86px; }
   }
 
   /* Overlay + drawers/modals */
@@ -381,7 +420,7 @@
       </div>
     </div>
     <div class="hero-img-wrap">
-      <img src="product-1.jpg" alt="Línea de productos YO Amor Propio">
+      <img src="product-1.jpg" alt="Línea de productos YO Amor Propio" fetchpriority="high" decoding="async">
     </div>
   </section>
 
@@ -396,7 +435,7 @@
 
   <section class="wrap" id="promoImageSection" hidden style="padding-block:32px 0;">
     <a href="#card-yo-noche" class="promo-image-wrap">
-      <img src="promo-yo-noche.jpg" alt="Promo de octubre: YO Noche 20% OFF + envío gratis">
+      <img src="promo-yo-noche.jpg" alt="Promo de octubre: YO Noche 20% OFF + envío gratis" loading="lazy" decoding="async">
     </a>
   </section>
 
@@ -462,6 +501,12 @@
 
 <a href="#" id="floatWa" class="float-wa" target="_blank" rel="noopener" aria-label="WhatsApp">💬</a>
 
+<!-- Barra fija en móvil: aparece solo con productos en el carrito, para comprar más rápido -->
+<div class="mobile-cart-bar" id="mobileCartBar" hidden>
+  <div><strong id="mobileCartTotal">$0</strong><span id="mobileCartCount">0 productos</span></div>
+  <button class="btn btn-sm" id="mobileCartBtn">Ver carrito</button>
+</div>
+
 <!-- Cart drawer -->
 <div class="overlay" id="overlay"></div>
 <aside class="drawer" id="cartDrawer" aria-label="Carrito de compras">
@@ -482,17 +527,17 @@
     <h3>Finalizar pedido</h3>
     <p class="sub">Completa tus datos de envío para generar el pedido.</p>
 
-    <div class="field"><label for="cName">Nombre completo *</label><input id="cName" type="text" placeholder="Tu nombre"></div>
-    <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000"></div>
-    <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad"></div>
-    <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio"></div>
+    <div class="field"><label for="cName">Nombre completo *</label><input id="cName" type="text" placeholder="Tu nombre" autocomplete="name"></div>
+    <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000" autocomplete="tel" inputmode="tel"></div>
+    <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad" autocomplete="address-level2"></div>
+    <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio" autocomplete="street-address"></div>
     <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
 
     <div class="order-summary" id="orderSummary"></div>
 
     <div id="onlinePaySection">
       <button class="btn btn-primary btn-block" id="payOnlineBtn">Pagar en línea ahora (tarjeta · PSE · Nequi)</button>
-      <p class="pay-online-note">Pago 100% seguro procesado por Bold.</p>
+      <p class="pay-online-note">🔒 Pago 100% seguro procesado por Bold · Envíos a toda Colombia</p>
     </div>
 
     <button class="btn btn-ghost btn-block" id="cancelCheckout" style="margin-top:10px;">Volver al carrito</button>
@@ -578,7 +623,7 @@
       var promo = onPromo(p);
       return (
         '<div class="card" id="card-'+p.id+'" data-id="'+p.id+'">' +
-          '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'">' +
+          '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'" loading="lazy" decoding="async">' +
           '<div class="card-body">' +
             '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
             '<h3>'+p.name+'</h3>' +
@@ -589,7 +634,8 @@
             '</div>' +
             (promo ? '<span class="promo-badge">'+p.promoLabel+'</span>' : '') +
             '<div class="card-actions">' +
-              '<button class="btn btn-primary btn-sm" data-add="'+p.id+'" style="flex:1;">Agregar al carrito</button>' +
+              '<button class="btn btn-outline btn-sm" data-add="'+p.id+'" aria-label="Agregar '+p.name+' al carrito">Agregar</button>' +
+              '<button class="btn btn-accent btn-sm" data-buy="'+p.id+'" aria-label="Comprar '+p.name+' ahora">Comprar ahora</button>' +
             '</div>' +
             '<button class="details-toggle" data-toggle="'+p.id+'">Ver ingredientes y beneficios ▾</button>' +
           '</div>' +
@@ -627,6 +673,16 @@
       saveCart(cart);
       renderCart();
       showToast('Agregado al carrito');
+      return;
+    }
+    // "Comprar ahora": agrega el producto y salta directo al checkout, sin
+    // pasos de más, para que la compra sea lo más rápida posible.
+    var buyId = e.target.getAttribute('data-buy');
+    if(buyId){
+      cart[buyId] = (cart[buyId] || 0) + 1;
+      saveCart(cart);
+      renderCart();
+      openCheckout();
     }
   });
 
@@ -714,6 +770,21 @@
     badge.textContent = count;
     badge.hidden = count===0;
 
+    // Barra fija en móvil con el total: ayuda a completar la compra más rápido
+    // sin tener que volver a subir hasta el ícono del carrito.
+    var mobileBar = document.getElementById('mobileCartBar');
+    if(mobileBar){
+      if(count>0){
+        mobileBar.hidden = false;
+        document.body.classList.add('has-mobile-cart-bar');
+        document.getElementById('mobileCartTotal').textContent = fmt(cartTotal());
+        document.getElementById('mobileCartCount').textContent = count + (count===1 ? ' producto' : ' productos');
+      }else{
+        mobileBar.hidden = true;
+        document.body.classList.remove('has-mobile-cart-bar');
+      }
+    }
+
     var body = document.getElementById('cartBody');
     var foot = document.getElementById('cartFoot');
     var keys = Object.keys(cart).filter(function(k){ return cart[k] > 0; });
@@ -763,6 +834,8 @@
   function closeCart(){ cartDrawer.classList.remove('open'); overlay.classList.remove('open'); }
   document.getElementById('cartBtn').addEventListener('click', openCart);
   document.getElementById('closeCart').addEventListener('click', closeCart);
+  var mobileCartBtn = document.getElementById('mobileCartBtn');
+  if(mobileCartBtn) mobileCartBtn.addEventListener('click', openCart);
   overlay.addEventListener('click', function(){ closeCart(); closeCheckout(); });
 
   // Mobile nav
@@ -783,6 +856,20 @@
     closeCart();
     checkoutWrap.classList.add('open');
     overlay.classList.add('open');
+    focusFirstEmptyField();
+  }
+
+  // Enfoca el primer campo vacío al abrir el checkout, para que el cliente
+  // pueda empezar a escribir de inmediato (menos clics = compra más rápida).
+  function focusFirstEmptyField(){
+    var ids = ['cName','cPhone','cCity','cAddress'];
+    for(var i=0;i<ids.length;i++){
+      var el = document.getElementById(ids[i]);
+      if(el && !el.value){
+        setTimeout(function(){ el.focus(); }, 60);
+        return;
+      }
+    }
   }
 
   function prepareOnlinePay(){
