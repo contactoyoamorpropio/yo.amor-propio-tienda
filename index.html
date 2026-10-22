@@ -461,6 +461,35 @@
   [hidden]{display:none!important;}
 
   .pay-online-note{font-size:.78rem; color:var(--text-muted); text-align:center; margin:-4px 0 14px;}
+
+  /* Pago contra entrega: la opción destacada, grande, arriba del pago en línea */
+  .pay-cod-card{
+    background:linear-gradient(135deg, color-mix(in srgb, var(--dia) 16%, var(--surface)), color-mix(in srgb, var(--accent) 10%, var(--surface)));
+    border:2px solid color-mix(in srgb, var(--dia) 55%, transparent);
+    border-radius:18px;
+    padding:18px 18px 16px;
+    margin-bottom:16px;
+    box-shadow:var(--shadow-sm);
+  }
+  .pay-cod-title{
+    display:flex; align-items:center; gap:10px;
+    font-size:1.15rem; font-weight:800; color:var(--text);
+    margin-bottom:4px;
+  }
+  .pay-cod-title .pay-cod-icon{font-size:1.5rem; line-height:1;}
+  .pay-cod-sub{font-size:.88rem; color:var(--text-muted); margin:0 0 14px; line-height:1.45;}
+  .btn-lg{padding:16px 22px; font-size:1.05rem; border-radius:14px;}
+  .btn-cod{
+    background:linear-gradient(135deg, var(--dia), #d4691f);
+    color:#fff; box-shadow:0 10px 24px rgba(232,121,42,.35);
+  }
+  .btn-cod:hover{ box-shadow:0 14px 30px rgba(232,121,42,.45); transform:translateY(-1px); }
+  .pay-cod-note{font-size:.78rem; color:var(--text-muted); text-align:center; margin:10px 0 0;}
+  .pay-divider{
+    display:flex; align-items:center; gap:10px; margin:18px 0;
+    color:var(--text-muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.06em;
+  }
+  .pay-divider::before, .pay-divider::after{content:""; flex:1; height:1px; background:var(--border);}
 </style>
 </head>
 <body>
@@ -504,6 +533,7 @@
       </div>
       <div class="hero-badges">
         <span><b>✓</b> Envío a toda Colombia</span>
+        <span><b>✓</b> Paga cuando recibas</span>
         <span><b>✓</b> Pago 100% seguro</span>
         <span><b>✓</b> Registro INVIMA</span>
       </div>
@@ -546,8 +576,8 @@
     <div class="steps">
       <div class="step"><div class="step-num">1</div><h4>Elige tus productos</h4><p>Agrega al carrito lo que quieras probar.</p></div>
       <div class="step"><div class="step-num">2</div><h4>Completa tus datos</h4><p>Nombre, dirección y ciudad para el envío.</p></div>
-      <div class="step"><div class="step-num">3</div><h4>Paga en línea y seguro</h4><p>Tarjeta, PSE o Nequi, procesado por Bold.</p></div>
-      <div class="step"><div class="step-num">4</div><h4>Recibe tu pedido</h4><p>Confirmamos tu pago y despachamos a tu ciudad.</p></div>
+      <div class="step"><div class="step-num">3</div><h4>Paga como prefieras</h4><p>Contra entrega (efectivo/transferencia al recibir) o en línea con tarjeta, PSE o Nequi.</p></div>
+      <div class="step"><div class="step-num">4</div><h4>Recibe tu pedido</h4><p>Confirmamos tu pedido y despachamos a tu ciudad.</p></div>
     </div>
   </section>
 
@@ -623,6 +653,15 @@
     <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
 
     <div class="order-summary" id="orderSummary"></div>
+
+    <div class="pay-cod-card">
+      <div class="pay-cod-title"><span class="pay-cod-icon">💵</span> Compra y paga cuando recibas</div>
+      <p class="pay-cod-sub">Confirma tu pedido ahora sin pagar en línea. Pagas en efectivo o transferencia directamente al recibirlo en la puerta de tu casa.</p>
+      <button class="btn btn-cod btn-block btn-lg" id="payCodBtn">Confirmar pedido · Pago contra entrega</button>
+      <p class="pay-cod-note">Te contactaremos por WhatsApp para coordinar la entrega.</p>
+    </div>
+
+    <div class="pay-divider"><span>o paga en línea</span></div>
 
     <div id="onlinePaySection">
       <button class="btn btn-primary btn-block" id="payOnlineBtn">Pagar en línea ahora (tarjeta · PSE · Nequi)</button>
@@ -1035,6 +1074,45 @@
       btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
     });
   });
+  // Pago contra entrega: registra el pedido directamente en la hoja de cálculo
+  // (mismo endpoint /api/log-order que usa Bold) y NO pasa por Bold en ningún momento.
+  document.getElementById('payCodBtn').addEventListener('click', function(){
+    var btn = this;
+    var amount = cartTotal();
+    if(!amount) return;
+
+    var cf = getCustomerFields();
+    if(!cf.name || !cf.phone || !cf.city || !cf.address){
+      showToast('Completa los campos obligatorios (*) antes de confirmar');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Confirmando pedido...';
+
+    var orderId = 'YOAP-' + Date.now();
+    logOrder({
+      orderId: orderId,
+      metodoPago: 'Pago contra entrega',
+      nombre: cf.name,
+      telefono: cf.phone,
+      ciudad: cf.city,
+      direccion: cf.address,
+      notas: cf.notes,
+      productos: productsSummaryText(),
+      total: fmt(amount)
+    });
+
+    cart = {};
+    saveCart(cart);
+    renderCart();
+    closeCheckout();
+    showToast('¡Pedido confirmado! Te contactaremos por WhatsApp para coordinar la entrega y el pago 💜');
+
+    btn.disabled = false;
+    btn.textContent = 'Confirmar pedido · Pago contra entrega';
+  });
+
   function closeCheckout(){ checkoutWrap.classList.remove('open'); overlay.classList.remove('open'); }
   document.getElementById('goCheckout').addEventListener('click', openCheckout);
   document.getElementById('cancelCheckout').addEventListener('click', function(){ closeCheckout(); openCart(); });
