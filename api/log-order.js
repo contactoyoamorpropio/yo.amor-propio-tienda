@@ -32,26 +32,49 @@ module.exports = async (req, res) => {
       telefono: String(body.telefono || '').slice(0, 40),
       ciudad: String(body.ciudad || '').slice(0, 80),
       direccion: String(body.direccion || '').slice(0, 200),
-      codigoPostal: String(body.codigoPostal || '').slice(0, 20),
       notas: String(body.notas || '').slice(0, 300),
       productos: String(body.productos || '').slice(0, 500),
       total: String(body.total || '').slice(0, 30)
     };
 
-    if (!payload.orderId || !payload.nombre) {
+    if (!payload.orderId || !payload.nombre || !payload.telefono || !payload.ciudad || !payload.direccion) {
       res.status(400).json({ error: 'invalid_argument' });
       return;
     }
 
-    const resp = await fetch(scriptUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-      redirect: 'follow'
-    });
+    let resp;
+    try {
+      resp = await fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        redirect: 'follow'
+      });
+    } catch (fetchErr) {
+      // Red caída, DNS, timeout, etc. contra el Apps Script.
+      res.status(502).json({ error: 'sheet_unreachable' });
+      return;
+    }
 
     if (!resp.ok) {
-      res.status(502).json({ error: 'sheet_error' });
+      res.status(502).json({ error: 'sheet_error', status: resp.status });
+      return;
+    }
+
+    // IMPORTANTE: el Apps Script SIEMPRE responde con HTTP 200 (ContentService
+    // no permite otros códigos), incluso cuando el secreto no coincide o algo
+    // falla internamente (`{"error":"unauthorized"}` o similar). Por eso no
+    // basta con mirar resp.ok: hay que confirmar que el propio cuerpo diga
+    // ok:true antes de decirle al cliente que el pedido quedó registrado.
+    let data = null;
+    try {
+      data = await resp.json();
+    } catch (parseErr) {
+      data = null;
+    }
+
+    if (!data || data.ok !== true) {
+      res.status(502).json({ error: 'sheet_rejected', detail: data && data.error ? String(data.error).slice(0, 200) : undefined });
       return;
     }
 
