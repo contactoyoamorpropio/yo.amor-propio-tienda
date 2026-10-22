@@ -732,6 +732,18 @@
   // Mientras esté vacía, el botón de pago en línea permanece oculto y solo se ofrece el pago manual.
   var BOLD_API_KEY = "y8eozqgJk4hDn5qf1v1HxqJb_xl1wb5rH_QEQ4ahn5U";
   var currentOrderId = null;
+  // Evita que se puedan disparar un pago en línea y uno contra entrega al
+  // mismo tiempo para el mismo carrito (doble clic, doble pedido).
+  var orderInFlight = false;
+  function setPayButtonsDisabled(disabled){
+    var codBtn = document.getElementById('payCodBtn');
+    var onlineBtn = document.getElementById('payOnlineBtn');
+    if(codBtn) codBtn.disabled = disabled;
+    // El botón de Bold se reactiva solo si de verdad hay pago en línea
+    // disponible (si no hay BOLD_API_KEY, prepareOnlinePay() ya lo dejó
+    // deshabilitado a propósito y no debemos reactivarlo).
+    if(onlineBtn && BOLD_API_KEY) onlineBtn.disabled = disabled;
+  }
 
   var PRODUCTS = [
     {
@@ -876,6 +888,13 @@
     var t=0; for(var k in cart){ var p=productById(k); if(p) t += effectivePrice(p)*cart[k]; } return t;
   }
 
+  // Al menos 7 dígitos (sin contar espacios/guiones/+) para evitar pedidos con
+  // un teléfono incompleto o escrito por error, sin ser tan estricto que
+  // rechace formatos válidos (+57, espacios, guiones, etc.).
+  function isPhoneValid(phone){
+    return (phone || '').replace(/\D/g, '').length >= 7;
+  }
+
   function getCustomerFields(){
     return {
       name: document.getElementById('cName').value.trim(),
@@ -895,19 +914,40 @@
   }
 
   // Envía los datos del pedido a la hoja de cálculo (vía la función serverless
-  // /api/log-order, que reenvía a Google Sheets). No bloquea la compra si falla.
+  // /api/log-order, que reenvía a Google Sheets). Devuelve una Promise<boolean>:
+  // true solo cuando el servidor confirma que el Apps Script registró la fila
+  // (ok:true), nunca solo porque la petición HTTP haya respondido 200 — así el
+  // llamador puede decidir si avisarle al cliente que el pedido quedó
+  // confirmado o si debe reintentar / avisar un error.
+  function logOrderAsync(payload){
+    return fetch('/api/log-order', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(!r.ok) return false;
+      return r.json().then(function(data){ return !!(data && data.ok === true); }).catch(function(){ return false; });
+    }).catch(function(){ return false; });
+  }
+
+  // Versión "dispárala y olvídala" para los casos en que no bloqueamos la UI
+  // por el resultado (p. ej. el registro del pago ya exitoso en Bold).
   function logOrder(payload){
-    try{
-      fetch('/api/log-order', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify(payload)
-      }).catch(function(){});
-    }catch(e){}
+    try{ logOrderAsync(payload).catch(function(){}); }catch(e){}
   }
 
   // Si Bold nos redirige de vuelta con ?pedido=ID tras un pago exitoso,
-  // recuperamos los datos guardados antes de salir y los registramos.
+  // recuperamos los datos guardados antes de salir y los registramos. El pago
+  // ya ocurrió en Bold (eso no depende de este registro), así que la UI no
+  // espera la respuesta; pero si el registro en la hoja falla, conservamos el
+  // pedido pendiente en localStorage para reintentarlo luego en vez de perder
+  // el rastro del pedido.
+  // Guarda el orderId que acaba de manejar checkReturnFromBold(), para que
+  // retryPendingOrderIfAny() no lo vuelva a registrar: esa función no puede
+  // fiarse de volver a leer la URL porque aquí abajo la limpiamos (quitamos
+  // ?pedido=) justo después, antes de que la promesa de logOrderAsync resuelva.
+  var lastHandledReturnOrderId = null;
+
   function checkReturnFromBold(){
     var params = new URLSearchParams(window.location.search);
     var pedido = params.get('pedido');
@@ -920,7 +960,8 @@
     }catch(e){ pending = null; }
 
     if(pending && pending.orderId === pedido){
-      logOrder({
+      lastHandledReturnOrderId = pending.orderId;
+      logOrderAsync({
         orderId: pending.orderId,
         metodoPago: 'Pago en línea (Bold)',
         nombre: pending.nombre,
@@ -930,8 +971,11 @@
         notas: pending.notas,
         productos: pending.productos,
         total: pending.total
+      }).then(function(ok){
+        // Solo limpiamos el pendiente si de verdad quedó registrado; si no,
+        // retryPendingOrder() lo reintentará en una próxima visita.
+        if(ok){ try{ localStorage.removeItem('yoap_pending_order'); }catch(e){} }
       });
-      try{ localStorage.removeItem('yoap_pending_order'); }catch(e){}
       cart = {};
       saveCart(cart);
       renderCart();
@@ -940,6 +984,32 @@
 
     var cleanUrl = window.location.origin + window.location.pathname;
     window.history.replaceState({}, document.title, cleanUrl);
+  }
+
+  // Si quedó un pedido pagado por Bold pendiente de registrar (por ejemplo,
+  // la pestaña se cerró o hubo un corte de red justo después del pago), lo
+  // reintenta en silencio en una visita posterior, sin afectar al cliente.
+  function retryPendingOrderIfAny(){
+    try{
+      var raw = localStorage.getItem('yoap_pending_order');
+      if(!raw) return;
+      var pending = JSON.parse(raw);
+      if(lastHandledReturnOrderId === pending.orderId) return; // ya lo maneja checkReturnFromBold()
+
+      logOrderAsync({
+        orderId: pending.orderId,
+        metodoPago: 'Pago en línea (Bold)',
+        nombre: pending.nombre,
+        telefono: pending.telefono,
+        ciudad: pending.ciudad,
+        direccion: pending.direccion,
+        notas: pending.notas,
+        productos: pending.productos,
+        total: pending.total
+      }).then(function(ok){
+        if(ok){ try{ localStorage.removeItem('yoap_pending_order'); }catch(e){} }
+      });
+    }catch(e){}
   }
 
   function renderCart(){
@@ -1064,6 +1134,7 @@
 
   document.getElementById('payOnlineBtn').addEventListener('click', function(){
     var btn = this;
+    if(orderInFlight) return;
     var amount = cartTotal();
     if(!amount || !currentOrderId) return;
 
@@ -1072,8 +1143,13 @@
       showToast('Completa los campos obligatorios (*) antes de pagar');
       return;
     }
+    if(!isPhoneValid(cf.phone)){
+      showToast('Revisa el teléfono, parece incompleto');
+      return;
+    }
 
-    btn.disabled = true;
+    orderInFlight = true;
+    setPayButtonsDisabled(true);
     btn.textContent = 'Preparando pago seguro...';
 
     fetch('/api/bold-signature', {
@@ -1115,19 +1191,28 @@
         redirectionUrl: window.location.origin + window.location.pathname + '?pedido=' + currentOrderId
       });
       checkout.open();
-      btn.disabled = false;
+      orderInFlight = false;
+      setPayButtonsDisabled(false);
       btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
     })
     .catch(function(){
       showToast('No se pudo iniciar el pago en línea. Intenta con el pago manual.');
-      btn.disabled = false;
+      orderInFlight = false;
+      setPayButtonsDisabled(false);
       btn.textContent = 'Pagar en línea ahora (tarjeta · PSE · Nequi)';
     });
   });
+
   // Pago contra entrega: registra el pedido directamente en la hoja de cálculo
-  // (mismo endpoint /api/log-order que usa Bold) y NO pasa por Bold en ningún momento.
+  // (mismo endpoint /api/log-order que usa Bold) y NO pasa por Bold en ningún
+  // momento. Solo le decimos al cliente que su pedido quedó confirmado cuando
+  // el registro en la hoja realmente se confirmó (ver logOrderAsync); si falla,
+  // reintenta una vez automáticamente antes de avisar el error, y NUNCA borra
+  // el carrito si no se pudo registrar, para que el cliente pueda intentarlo
+  // de nuevo sin perder lo que ya había elegido.
   document.getElementById('payCodBtn').addEventListener('click', function(){
     var btn = this;
+    if(orderInFlight) return;
     var amount = cartTotal();
     if(!amount) return;
 
@@ -1136,13 +1221,17 @@
       showToast('Completa los campos obligatorios (*) antes de confirmar');
       return;
     }
+    if(!isPhoneValid(cf.phone)){
+      showToast('Revisa el teléfono, parece incompleto');
+      return;
+    }
 
-    btn.disabled = true;
+    orderInFlight = true;
+    setPayButtonsDisabled(true);
     btn.textContent = 'Confirmando pedido...';
 
-    var orderId = 'YOAP-' + Date.now();
-    logOrder({
-      orderId: orderId,
+    var payload = {
+      orderId: 'YOAP-' + Date.now(),
       metodoPago: 'Pago contra entrega',
       nombre: cf.name,
       telefono: cf.phone,
@@ -1151,16 +1240,37 @@
       notas: cf.notes,
       productos: productsSummaryText(),
       total: fmt(amount)
+    };
+
+    function finishSuccess(){
+      cart = {};
+      saveCart(cart);
+      renderCart();
+      closeCheckout();
+      showToast('¡Pedido confirmado! Te contactaremos por WhatsApp para coordinar la entrega y el pago 💜');
+      orderInFlight = false;
+      setPayButtonsDisabled(false);
+      btn.textContent = 'Confirmar pedido · Pago contra entrega';
+    }
+
+    function finishFailure(){
+      // El carrito y los datos del formulario se quedan intactos a propósito:
+      // el cliente puede volver a pulsar el botón sin tener que escribir todo
+      // de nuevo, y nunca le decimos "confirmado" si no fue cierto.
+      showToast('No pudimos confirmar tu pedido. Vuelve a intentarlo o escríbenos por WhatsApp.');
+      orderInFlight = false;
+      setPayButtonsDisabled(false);
+      btn.textContent = 'Confirmar pedido · Pago contra entrega';
+    }
+
+    logOrderAsync(payload).then(function(ok){
+      if(ok){ finishSuccess(); return; }
+      // Un reintento automático antes de darnos por vencidos: cubre fallas
+      // transitorias de red sin que el cliente tenga que notarlo.
+      logOrderAsync(payload).then(function(ok2){
+        if(ok2){ finishSuccess(); } else { finishFailure(); }
+      });
     });
-
-    cart = {};
-    saveCart(cart);
-    renderCart();
-    closeCheckout();
-    showToast('¡Pedido confirmado! Te contactaremos por WhatsApp para coordinar la entrega y el pago 💜');
-
-    btn.disabled = false;
-    btn.textContent = 'Confirmar pedido · Pago contra entrega';
   });
 
   function closeCheckout(){ checkoutWrap.classList.remove('open'); overlay.classList.remove('open'); }
@@ -1195,6 +1305,7 @@
 
   renderCart();
   checkReturnFromBold();
+  retryPendingOrderIfAny();
 })();
 </script>
 </body>
