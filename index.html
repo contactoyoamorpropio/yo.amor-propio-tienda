@@ -5,6 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YO Amor Propio</title>
 <meta name="description" content="Tienda online YO Amor Propio: bebidas funcionales y suplementos de bienestar. Envíos a toda Colombia.">
+<!-- Meta Pixel Code -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1479268100932937');
+fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
+/></noscript>
+<!-- End Meta Pixel Code -->
 <!--
   CONFIGURACIÓN DE PAGOS EN LÍNEA (Bold)
   --------------------------------------
@@ -732,6 +749,42 @@
   // Mientras esté vacía, el botón de pago en línea permanece oculto y solo se ofrece el pago manual.
   var BOLD_API_KEY = "y8eozqgJk4hDn5qf1v1HxqJb_xl1wb5rH_QEQ4ahn5U";
   var currentOrderId = null;
+  // Meta Pixel: envoltorio seguro (si un bloqueador de anuncios impide que
+  // cargue fbevents.js, el sitio sigue funcionando igual, solo no se registra
+  // el evento) y protección contra contar el mismo "Purchase" dos veces (por
+  // ejemplo si el cliente recarga la página de confirmación de Bold).
+  function trackPixelEvent(name, params){
+    try{
+      if(typeof fbq === 'function') fbq('track', name, params);
+    }catch(e){}
+  }
+  function trackPurchaseOnce(orderId, params){
+    try{
+      var tracked = JSON.parse(localStorage.getItem('yoap_tracked_purchases') || '[]');
+      if(tracked.indexOf(orderId) !== -1) return;
+      tracked.push(orderId);
+      if(tracked.length > 50) tracked = tracked.slice(-50);
+      localStorage.setItem('yoap_tracked_purchases', JSON.stringify(tracked));
+    }catch(e){}
+    trackPixelEvent('Purchase', params);
+  }
+  // Arma los campos content_ids/contents/value que pide Meta a partir del
+  // carrito actual, para usarlos en AddToCart/InitiateCheckout/Purchase.
+  function cartContentsForPixel(){
+    var ids = [];
+    var contents = [];
+    var numItems = 0;
+    for(var k in cart){
+      if(!cart[k]) continue;
+      var p = productById(k);
+      if(!p) continue;
+      ids.push(k);
+      contents.push({ id: k, quantity: cart[k], item_price: effectivePrice(p) });
+      numItems += cart[k];
+    }
+    return { ids: ids, contents: contents, numItems: numItems };
+  }
+
   // Evita que se puedan disparar un pago en línea y uno contra entrega al
   // mismo tiempo para el mismo carrito (doble clic, doble pedido).
   var orderInFlight = false;
@@ -854,7 +907,23 @@
     var toggleId = e.target.getAttribute('data-toggle');
     if(toggleId){
       var panel = document.getElementById('details-'+toggleId);
-      if(panel) panel.classList.toggle('open');
+      if(panel){
+        var nowOpen = panel.classList.toggle('open');
+        // Solo al abrir (no al cerrar), para no duplicar el evento: indica
+        // interés real del visitante en ese producto en concreto.
+        if(nowOpen){
+          var pv = productById(toggleId);
+          if(pv){
+            trackPixelEvent('ViewContent', {
+              content_ids: [toggleId],
+              content_name: pv.name,
+              content_type: 'product',
+              value: effectivePrice(pv),
+              currency: 'COP'
+            });
+          }
+        }
+      }
       return;
     }
     var addId = e.target.getAttribute('data-add');
@@ -863,6 +932,17 @@
       saveCart(cart);
       renderCart();
       showToast('Agregado al carrito');
+      var pa = productById(addId);
+      if(pa){
+        trackPixelEvent('AddToCart', {
+          content_ids: [addId],
+          content_name: pa.name,
+          content_type: 'product',
+          value: effectivePrice(pa),
+          currency: 'COP',
+          contents: [{ id: addId, quantity: 1 }]
+        });
+      }
       return;
     }
     // "Comprar ahora": agrega el producto y salta directo al checkout, sin
@@ -872,6 +952,17 @@
       cart[buyId] = (cart[buyId] || 0) + 1;
       saveCart(cart);
       renderCart();
+      var pb = productById(buyId);
+      if(pb){
+        trackPixelEvent('AddToCart', {
+          content_ids: [buyId],
+          content_name: pb.name,
+          content_type: 'product',
+          value: effectivePrice(pb),
+          currency: 'COP',
+          contents: [{ id: buyId, quantity: 1 }]
+        });
+      }
       openCheckout();
     }
   });
@@ -976,6 +1067,18 @@
         // retryPendingOrder() lo reintentará en una próxima visita.
         if(ok){ try{ localStorage.removeItem('yoap_pending_order'); }catch(e){} }
       });
+      // El pago ya lo confirmó Bold con esta redirección (es independiente de
+      // si el registro en la hoja de cálculo tiene éxito o no), así que el
+      // "Purchase" se reporta aquí, con el valor y los productos reales.
+      var pc = pending.pixelContents || { ids: [], contents: [], numItems: 0 };
+      trackPurchaseOnce(pending.orderId, {
+        content_ids: pc.ids,
+        content_type: 'product',
+        contents: pc.contents,
+        num_items: pc.numItems,
+        value: (typeof pending.totalValue === 'number') ? pending.totalValue : undefined,
+        currency: 'COP'
+      });
       cart = {};
       saveCart(cart);
       renderCart();
@@ -995,6 +1098,20 @@
       if(!raw) return;
       var pending = JSON.parse(raw);
       if(lastHandledReturnOrderId === pending.orderId) return; // ya lo maneja checkReturnFromBold()
+
+      // Red de seguridad: si por lo que sea el "Purchase" no se reportó en su
+      // momento (por ejemplo la pestaña se cerró antes de que cargara el
+      // pixel), se reporta ahora; trackPurchaseOnce no lo duplica si ya se
+      // había registrado.
+      var pcRetry = pending.pixelContents || { ids: [], contents: [], numItems: 0 };
+      trackPurchaseOnce(pending.orderId, {
+        content_ids: pcRetry.ids,
+        content_type: 'product',
+        contents: pcRetry.contents,
+        num_items: pcRetry.numItems,
+        value: (typeof pending.totalValue === 'number') ? pending.totalValue : undefined,
+        currency: 'COP'
+      });
 
       logOrderAsync({
         orderId: pending.orderId,
@@ -1105,6 +1222,16 @@
     checkoutWrap.classList.add('open');
     overlay.classList.add('open');
     focusFirstEmptyField();
+
+    var cp = cartContentsForPixel();
+    trackPixelEvent('InitiateCheckout', {
+      content_ids: cp.ids,
+      content_type: 'product',
+      contents: cp.contents,
+      num_items: cp.numItems,
+      value: cartTotal(),
+      currency: 'COP'
+    });
   }
 
   // Enfoca el primer campo vacío al abrir el checkout, para que el cliente
@@ -1167,8 +1294,11 @@
       }
 
       // Guarda los datos del pedido para poder registrarlo en la hoja de cálculo
-      // cuando Bold nos devuelva al sitio tras un pago exitoso.
+      // Y para reportar el evento "Purchase" a Meta cuando Bold nos devuelva
+      // al sitio tras un pago exitoso (totalValue/pixelContents son para eso;
+      // el resto ya se usaba para la hoja de cálculo).
       try{
+        var pixelContents = cartContentsForPixel();
         localStorage.setItem('yoap_pending_order', JSON.stringify({
           orderId: currentOrderId,
           nombre: cf.name,
@@ -1177,7 +1307,9 @@
           direccion: cf.address,
           notas: cf.notes,
           productos: productsSummaryText(),
-          total: fmt(amount)
+          total: fmt(amount),
+          totalValue: amount,
+          pixelContents: pixelContents
         }));
       }catch(e){}
 
@@ -1230,8 +1362,9 @@
     setPayButtonsDisabled(true);
     btn.textContent = 'Confirmando pedido...';
 
+    var codOrderId = 'YOAP-' + Date.now();
     var payload = {
-      orderId: 'YOAP-' + Date.now(),
+      orderId: codOrderId,
       metodoPago: 'Pago contra entrega',
       nombre: cf.name,
       telefono: cf.phone,
@@ -1241,8 +1374,19 @@
       productos: productsSummaryText(),
       total: fmt(amount)
     };
+    // Se captura ANTES de vaciar el carrito en finishSuccess(), para poder
+    // reportar a Meta exactamente qué se compró.
+    var codPixelContents = cartContentsForPixel();
 
     function finishSuccess(){
+      trackPurchaseOnce(codOrderId, {
+        content_ids: codPixelContents.ids,
+        content_type: 'product',
+        contents: codPixelContents.contents,
+        num_items: codPixelContents.numItems,
+        value: amount,
+        currency: 'COP'
+      });
       cart = {};
       saveCart(cart);
       renderCart();
