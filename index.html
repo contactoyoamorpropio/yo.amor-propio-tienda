@@ -490,6 +490,39 @@
     color:var(--text-muted); font-size:.8rem; text-transform:uppercase; letter-spacing:.06em;
   }
   .pay-divider::before, .pay-divider::after{content:""; flex:1; height:1px; background:var(--border);}
+
+  /* Pago contra entrega: banner grande al inicio de la página */
+  .cod-top-banner{
+    background:linear-gradient(135deg, var(--dia), #d4691f);
+    color:#fff;
+  }
+  .cod-top-banner-inner{
+    display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+    padding:16px 20px; text-align:center;
+  }
+  .cod-top-banner .cod-icon{font-size:1.9rem; line-height:1;}
+  .cod-top-banner-text strong{display:block; font-size:1.12rem; font-weight:800; letter-spacing:-.01em;}
+  .cod-top-banner-text span{display:block; font-size:.84rem; font-weight:500; opacity:.95; margin-top:2px;}
+
+  /* Pago contra entrega: callout grande en la sección de productos */
+  .cod-products-callout{
+    display:flex; align-items:center; justify-content:center; gap:16px; flex-wrap:wrap;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--dia) 16%, var(--surface)), color-mix(in srgb, var(--accent) 10%, var(--surface)));
+    border:2px solid color-mix(in srgb, var(--dia) 55%, transparent);
+    border-radius:18px;
+    padding:18px 24px;
+    margin:0 0 32px;
+    text-align:center;
+    box-shadow:var(--shadow-sm);
+  }
+  .cod-products-callout .cod-icon{font-size:2.3rem; line-height:1;}
+  .cod-products-callout strong{display:block; font-size:1.22rem; font-weight:800; color:var(--text); letter-spacing:-.01em;}
+  .cod-products-callout span{display:block; font-size:.9rem; color:var(--text-muted); margin-top:2px;}
+  @media (max-width:560px){
+    .cod-top-banner-text strong{font-size:1rem;}
+    .cod-products-callout{padding:16px 18px;}
+    .cod-products-callout strong{font-size:1.08rem;}
+  }
 </style>
 </head>
 <body>
@@ -514,6 +547,16 @@
     </div>
   </div>
 </header>
+
+<div class="cod-top-banner">
+  <div class="wrap cod-top-banner-inner">
+    <span class="cod-icon">💵</span>
+    <div class="cod-top-banner-text">
+      <strong>Compra y paga cuando recibas</strong>
+      <span>Pide ahora sin pagar en línea · Pagas en efectivo o transferencia al recibir tu pedido</span>
+    </div>
+  </div>
+</div>
 
 <div class="promo-bar" id="promoBar" hidden>
   <div class="wrap promo-bar-inner">
@@ -563,6 +606,13 @@
       <div class="kicker">Nuestra línea</div>
       <h2>Productos YO</h2>
       <p>Cuatro fórmulas pensadas para distintos momentos de tu día. Envíos a toda Colombia.</p>
+    </div>
+    <div class="cod-products-callout">
+      <span class="cod-icon">💵</span>
+      <div>
+        <strong>Compra y paga cuando recibas</strong>
+        <span>Elige tus productos, confirma tu pedido y paga en efectivo o transferencia al recibirlo. Sin pago en línea.</span>
+      </div>
     </div>
     <div class="products-grid" id="productsGrid"></div>
   </section>
