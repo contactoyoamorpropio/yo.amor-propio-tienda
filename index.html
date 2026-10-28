@@ -5,6 +5,24 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>YO Amor Propio</title>
 <meta name="description" content="Tienda online YO Amor Propio: bebidas funcionales y suplementos de bienestar. Envíos a toda Colombia.">
+
+<!-- Open Graph / Twitter Card: controla cómo se ve el link al compartirlo por
+     WhatsApp, Instagram o Facebook (título, descripción e imagen de vista
+     previa). Sin esto, el link se comparte "pelado", sin tarjeta. -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.yoamorpropio.com/">
+<meta property="og:site_name" content="YO Amor Propio">
+<meta property="og:locale" content="es_CO">
+<meta property="og:title" content="YO Amor Propio — Elige lo que te hace bien">
+<meta property="og:description" content="Bebidas funcionales y suplementos de bienestar. Paga cuando recibas o en línea. Envío gratis a toda Colombia.">
+<meta property="og:image" content="https://www.yoamorpropio.com/product-1.jpg">
+<meta property="og:image:width" content="1100">
+<meta property="og:image:height" content="1100">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="YO Amor Propio — Elige lo que te hace bien">
+<meta name="twitter:description" content="Bebidas funcionales y suplementos de bienestar. Paga cuando recibas o en línea. Envío gratis a toda Colombia.">
+<meta name="twitter:image" content="https://www.yoamorpropio.com/product-1.jpg">
+
 <!-- Meta Pixel Code -->
 <script>
 !function(f,b,e,v,n,t,s)
@@ -271,6 +289,21 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   }
   @media (max-width:980px){ .products-grid{grid-template-columns:1fr 1fr;} }
   @media (max-width:560px){ .products-grid{grid-template-columns:1fr;} }
+
+  /* Combo: ocupa todo el ancho de la grilla (fila propia) y se muestra como
+     banner horizontal (imagen a la izquierda, info a la derecha) en vez de
+     tarjeta cuadrada, porque a ese ancho una imagen 1:1 completa se vería
+     enorme y desproporcionada. En móvil vuelve a apilarse como las demás. */
+  .products-grid .combo-card{
+    grid-column:1 / -1; flex-direction:row; align-items:stretch;
+    border:1.5px solid color-mix(in srgb, var(--brand) 35%, var(--border));
+  }
+  .combo-card .card-img{width:260px; height:auto; flex-shrink:0;}
+  .combo-card .card-body{justify-content:center;}
+  @media (max-width:760px){
+    .combo-card{flex-direction:column;}
+    .combo-card .card-img{width:100%; aspect-ratio:1/1;}
+  }
 
   @keyframes cardIn{
     from{opacity:0; transform:translateY(18px);}
@@ -775,6 +808,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   <div class="drawer-foot" id="cartFoot" hidden>
     <div class="cart-total-row"><span>Total</span><span id="cartTotal">$0</span></div>
     <button class="btn btn-primary btn-block" id="goCheckout">Continuar con el pedido</button>
+    <p class="pay-cod-note">🚚 Envío gratis a toda Colombia</p>
   </div>
 </aside>
 
@@ -796,14 +830,14 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       <div class="pay-cod-title"><span class="pay-cod-icon">💵</span> Compra y paga cuando recibas</div>
       <p class="pay-cod-sub">Confirma tu pedido ahora sin pagar en línea. Pagas en efectivo o transferencia directamente al recibirlo en la puerta de tu casa.</p>
       <button class="btn btn-cod btn-block btn-lg" id="payCodBtn">Confirmar pedido · Pago contra entrega</button>
-      <p class="pay-cod-note">Te contactaremos por WhatsApp para coordinar la entrega.</p>
+      <p class="pay-cod-note">Te contactaremos por WhatsApp para coordinar la entrega · 🚚 Envío gratis</p>
     </div>
 
     <div class="pay-divider"><span>o paga en línea</span></div>
 
     <div id="onlinePaySection">
       <button class="btn btn-primary btn-block" id="payOnlineBtn">Pagar en línea ahora (tarjeta · PSE · Nequi)</button>
-      <p class="pay-online-note">🔒 Pago 100% seguro procesado por Bold · Envíos a toda Colombia</p>
+      <p class="pay-online-note">🔒 Pago 100% seguro procesado por Bold · Envío gratis a toda Colombia</p>
     </div>
 
     <button class="btn btn-ghost btn-block" id="cancelCheckout" style="margin-top:10px;">Volver al carrito</button>
@@ -898,6 +932,20 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       presentacion:"Alimento en polvo a base de maltodextrina · Sabor manzana verde · 300 g · 20 porciones",
       ingredientes:["Té verde","Alcachofa","Durazno","Manzanilla","Jengibre","Apio"],
       beneficios:["Apoya tu metabolismo","Favorece la digestión","Aporta antioxidantes","Promueve bienestar integral"]
+    },
+    // Combo: es un "producto" más para el carrito (mismo id, mismo flujo de pago,
+    // mismo evento de Pixel) pero con precio fijo de paquete en vez de un promoPrice
+    // con fecha de vencimiento. isCombo/comboStrike/comboBadge solo cambian cómo se
+    // VE la tarjeta (ver productsGridHtml) — toda la lógica de carrito/checkout de
+    // abajo no sabe ni le importa que esto sea un combo, así que no hay riesgo de
+    // romper nada ya probado.
+    {
+      id:"combo-dia-noche", name:"Combo YO Día + YO Noche", line:"Combo", color:"var(--brand)", img:"combo-dia-noche.jpg",
+      tagline:"Energía de día, descanso de noche. El dúo más pedido.", price:99000,
+      isCombo:true, comboStrike:120000, comboBadge:"Ahorra $21.000",
+      presentacion:"1x YO Día (480 ml) + 1x YO Noche (480 ml) · 50 porciones en total",
+      ingredientes:["YO Día: Maca, Borojó y Chontaduro","YO Noche: Cidrón, Toronjil, Manzanilla y Cilantro"],
+      beneficios:["Energía natural en el día y relajación real en la noche","Ahorras $21.000 frente a comprarlos por separado","Ideal para probar dos líneas distintas de una vez"]
     }
   ];
 
@@ -935,18 +983,24 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     return PRODUCTS.map(function(p){
       var eff = effectivePrice(p);
       var promo = onPromo(p);
+      // El combo muestra su propio "antes" (suma de los dos productos por
+      // separado) y su propia etiqueta de ahorro, independientes del sistema
+      // de promoPrice/promoUntil (que es para ofertas con fecha de vencimiento).
+      var showStrike = promo || !!p.comboStrike;
+      var strikeValue = promo ? p.price : p.comboStrike;
+      var badgeText = promo ? p.promoLabel : (p.comboBadge || null);
       return (
-        '<div class="card" id="card-'+p.id+'" data-id="'+p.id+'">' +
+        '<div class="card'+(p.isCombo ? ' combo-card' : '')+'" id="card-'+p.id+'" data-id="'+p.id+'">' +
           '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'" loading="lazy" decoding="async">' +
           '<div class="card-body">' +
             '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
             '<h3>'+p.name+'</h3>' +
             '<p class="tagline">'+p.tagline+'</p>' +
             '<div class="price-row">' +
-              (promo ? '<span class="price-original">'+fmt(p.price)+'</span>' : '') +
+              (showStrike ? '<span class="price-original">'+fmt(strikeValue)+'</span>' : '') +
               '<span class="price">'+fmt(eff)+'</span>' +
             '</div>' +
-            (promo ? '<span class="promo-badge">'+p.promoLabel+'</span>' : '') +
+            (badgeText ? '<span class="promo-badge">'+badgeText+'</span>' : '') +
             '<div class="card-actions">' +
               '<button class="btn btn-outline btn-sm" data-add="'+p.id+'" aria-label="Agregar '+p.name+' al carrito">Agregar</button>' +
               '<button class="btn btn-accent btn-sm" data-buy="'+p.id+'" aria-label="Comprar '+p.name+' ahora">Comprar ahora</button>' +
