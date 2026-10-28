@@ -347,6 +347,44 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   .step h4{margin:0 0 6px; font-size:1rem;}
   .step p{margin:0; color:var(--text-muted); font-size:.86rem;}
 
+  /* Testimonials */
+  /* flex (no grid) a propósito: con 1 o 2 testimonios se ven centrados y del
+     mismo tamaño que con 3+, en vez de dejar columnas vacías a los lados. */
+  .testimonials-grid{display:flex; flex-wrap:wrap; justify-content:center; gap:22px;}
+  .testimonial-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:24px 22px 20px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px;
+    position:relative; transition:transform .2s ease, box-shadow .2s ease;
+    flex:1 1 300px; max-width:360px;
+  }
+  @media (hover:hover){
+    .testimonial-card:hover{ transform:translateY(-4px); box-shadow:var(--shadow); }
+  }
+  .testimonial-quote-mark{
+    font-family:'Caveat',cursive; font-size:3rem; line-height:.5; color:var(--accent); opacity:.55;
+    display:block; margin-bottom:-4px;
+  }
+  .testimonial-top{display:flex; align-items:center; gap:10px;}
+  .testimonial-avatar{
+    width:42px; height:42px; border-radius:999px; flex-shrink:0;
+    background:linear-gradient(135deg, var(--brand), var(--accent)); color:#fff;
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:1.05rem;
+  }
+  .testimonial-who{display:flex; flex-direction:column; line-height:1.25; flex:1; min-width:0;}
+  .testimonial-who strong{font-size:.95rem;}
+  .testimonial-who span{font-size:.78rem; color:var(--text-muted);}
+  .testimonial-stars{color:#F5A623; font-size:.92rem; letter-spacing:2px;}
+  .testimonial-quote{font-size:.9rem; color:var(--text); line-height:1.6; margin:0; flex:1;}
+  .testimonial-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:4px; flex-wrap:wrap;}
+  .testimonial-tag{
+    color:#fff; font-size:.7rem; font-weight:700;
+    padding:4px 10px; border-radius:999px; text-transform:uppercase; letter-spacing:.04em;
+  }
+  .testimonial-wa-badge{
+    display:inline-flex; align-items:center; gap:5px; font-size:.74rem; font-weight:600; color:var(--text-muted);
+  }
+  .testimonial-wa-badge b{color:#25D366; font-weight:800;}
+
   /* Distributor banner */
   .distrib-banner{
     position:relative; overflow:hidden;
@@ -552,6 +590,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     </a>
     <nav class="main-nav" id="mainNav">
       <a href="#productos">Productos</a>
+      <a href="#testimonios">Testimonios</a>
       <a href="#como-comprar">Cómo comprar</a>
       <a href="#distribuidoras">Sé distribuidora</a>
       <a href="#contacto">Contacto</a>
@@ -589,7 +628,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       <p>Bebidas funcionales e ingredientes naturales para tu energía, tu descanso, tu piel y tu metabolismo. Nutre tu cuerpo, eleva tu energía, fortalece tu bienestar.</p>
       <div class="hero-ctas">
         <a href="#productos" class="btn btn-primary">Ver productos</a>
-        <a href="#como-comprar" class="btn btn-outline">Cómo comprar</a>
+        <a href="#productos" class="btn btn-accent">Comprar ahora</a>
       </div>
       <div class="hero-badges">
         <span><b>✓</b> Envío a toda Colombia</span>
@@ -634,6 +673,37 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     <div class="products-grid" id="productsGrid"></div>
   </section>
 
+  <section class="section wrap" id="testimonios">
+    <div class="section-head">
+      <div class="kicker">Testimonios reales</div>
+      <h2>Lo que nos escriben por WhatsApp</h2>
+      <p>Historias reales de personas que ya probaron YO Amor Propio.</p>
+    </div>
+    <div class="testimonials-grid">
+      <!-- Testimonio 1 — Juliana, Fusagasugá (YO Noche / "YO Descanso").
+           Para agregar otro testimonio en el futuro, copia este bloque
+           .testimonial-card completo y cambia el texto, nombre, ciudad,
+           inicial del avatar y el color/nombre del producto (var(--dia),
+           var(--rejuv) o var(--fit) según corresponda). -->
+      <div class="testimonial-card">
+        <span class="testimonial-quote-mark">&ldquo;</span>
+        <div class="testimonial-top">
+          <div class="testimonial-avatar">J</div>
+          <div class="testimonial-who">
+            <strong>Juliana</strong>
+            <span>Fusagasugá, Cundinamarca</span>
+          </div>
+        </div>
+        <div class="testimonial-stars" aria-label="5 de 5 estrellas">★★★★★</div>
+        <p class="testimonial-quote">Buenas tardes. Soy Juliana, vivo en Fusagasugá y quiero agradecerles, porque después de mucho tiempo sin dormir adecuadamente y, luego de probar desde lo natural hasta lo formulado, me recomendaron su producto YO Descanso, lo compré pensando en &ldquo;uno más&rdquo;. Pero estoy tan satisfecha con el resultado, que al fin he tenido noches de verdadero y reparador descanso. Dios los bendiga.</p>
+        <div class="testimonial-foot">
+          <span class="testimonial-tag" style="background:var(--noche)">YO Noche</span>
+          <span class="testimonial-wa-badge"><b>✓</b> Mensaje real de WhatsApp</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="section wrap" id="como-comprar">
     <div class="section-head">
       <div class="kicker">Proceso</div>
@@ -676,6 +746,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       <h4>Enlaces</h4>
       <ul>
         <li><a href="#productos">Productos</a></li>
+        <li><a href="#testimonios">Testimonios</a></li>
         <li><a href="#como-comprar">Cómo comprar</a></li>
         <li><a href="#distribuidoras">Sé distribuidora</a></li>
       </ul>
