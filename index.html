@@ -77,6 +77,10 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     --noche:#33285F;
     --rejuv:#A0298C;
     --fit:#4C8C3C;
+    --vigor:#C62828;
+    --mujer:#9C2D5E;
+    --detox:#2E7D4F;
+    --blackgold:#C89A3C;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -120,11 +124,40 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   .brand-script{font-family:'Caveat',cursive;}
 
   /* Header */
+  .sticky-top-stack{ position:sticky; top:0; z-index:40; }
   header.site{
-    position:sticky; top:0; z-index:40;
     background:color-mix(in srgb, var(--surface) 92%, transparent);
     backdrop-filter: blur(8px);
     border-bottom:1px solid var(--border);
+  }
+
+  /* Black Days: barra de anuncio fija arriba de todo, visible apenas se
+     entra a la página (y mientras se navega, porque va dentro del mismo
+     contenedor sticky que el header). Enlaza directo a la tarjeta del
+     combo en la grilla de productos. */
+  .black-days-bar{
+    background:linear-gradient(90deg, #0d0b09, #1d1710 45%, #0d0b09);
+    color:#fff;
+    border-bottom:1px solid color-mix(in srgb, var(--blackgold) 45%, transparent);
+  }
+  .black-days-bar-inner{
+    display:flex; align-items:center; justify-content:center; gap:10px 14px; flex-wrap:wrap;
+    padding-block:10px; font-size:.88rem; text-align:center;
+  }
+  .black-days-bar-inner > span:first-child{min-width:0; max-width:100%; flex:1 1 auto;}
+  .black-days-bar-inner strong{color:var(--blackgold); font-weight:800;}
+  .black-days-bar-link{
+    background:var(--blackgold); color:#1a1408; font-weight:700; font-size:.8rem;
+    padding:6px 16px; border-radius:999px; text-decoration:none; white-space:nowrap;
+    transition:transform .15s ease;
+  }
+  @media (hover:hover){ .black-days-bar-link:hover{ transform:translateY(-1px); } }
+  @media (prefers-reduced-motion: no-preference){
+    .black-days-bar{ animation:bdGlow 3.2s ease-in-out infinite; }
+  }
+  @keyframes bdGlow{
+    0%,100%{ box-shadow: inset 0 0 0 rgba(200,154,60,0); }
+    50%{ box-shadow: inset 0 -18px 24px -18px rgba(200,154,60,.45); }
   }
   .header-row{
     display:flex; align-items:center; justify-content:space-between;
@@ -152,12 +185,20 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   .menu-toggle{display:none;}
 
   @media (max-width:820px){
+    /* position:absolute con top:100% se ancla al contenedor sticky
+       (.sticky-top-stack, que sí tiene position no-estática), así que el
+       menú siempre aparece justo debajo de la barra + header sin importar
+       su alto exacto. Se evita position:fixed aquí a propósito: el header
+       tiene backdrop-filter, que crea su propio "containing block" para
+       elementos fixed y desalinea el menú (ver nota junto a .sticky-top-stack). */
     nav.main-nav{
-      position:fixed; inset:60px 0 auto 0; background:var(--surface); border-bottom:1px solid var(--border);
-      flex-direction:column; padding:14px 20px 20px; gap:14px; transform:translateY(-120%); transition:transform .25s ease;
+      position:absolute; top:100%; left:0; right:0;
+      background:var(--surface); border-bottom:1px solid var(--border);
+      flex-direction:column; padding:14px 20px 20px; gap:14px;
       box-shadow: var(--shadow);
+      display:none;
     }
-    nav.main-nav.open{transform:translateY(0);}
+    nav.main-nav.open{display:flex;}
     .menu-toggle{display:flex;}
   }
 
@@ -300,6 +341,31 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   }
   .combo-card .card-img{width:260px; height:auto; flex-shrink:0;}
   .combo-card .card-body{justify-content:center;}
+
+  /* Black Days: mismo layout de combo-card, acento negro/dorado para que se
+     note de inmediato que es una oferta especial por tiempo limitado. */
+  .products-grid .combo-card.black-days{
+    border:1.5px solid color-mix(in srgb, var(--blackgold) 55%, var(--border));
+    background:linear-gradient(135deg, #15110c, #1f1a12);
+    box-shadow:0 10px 30px rgba(0,0,0,.28);
+  }
+  .black-days .line-tag{background:var(--blackgold) !important; color:#1a1408;}
+  .black-days h3, .black-days .tagline{color:#fff;}
+  .black-days .price{
+    background:none; -webkit-background-clip:unset; background-clip:unset;
+    color:var(--blackgold); -webkit-text-fill-color:var(--blackgold);
+  }
+  .black-days .price-original{color:#c9c2b8;}
+  .black-days .promo-badge{background:var(--blackgold); color:#1a1408;}
+  .black-days .details-toggle{color:var(--blackgold);}
+  .black-days .btn-outline{color:#fff; border-color:var(--blackgold);}
+  @media (hover:hover){
+    .black-days .btn-outline:hover{ background:color-mix(in srgb, var(--blackgold) 14%, transparent); }
+  }
+  .black-days .details-panel{border-top:1px solid rgba(255,255,255,.14); color:#d8d2c8;}
+  .black-days .details-panel h4{color:#fff;}
+  .black-days .details-panel .meta{color:#b9b2a6;}
+
   @media (max-width:760px){
     .combo-card{flex-direction:column;}
     .combo-card .card-img{width:100%; aspect-ratio:1/1;}
@@ -615,27 +681,35 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
 </head>
 <body>
 
-<header class="site">
-  <div class="wrap header-row">
-    <a href="#top" class="logo-link">
-      <img src="logo.jpg" alt="YO Amor Propio">
-      <span>YO <span class="brand-script" style="font-size:1.2em; color:var(--accent);">Amor Propio</span></span>
-    </a>
-    <nav class="main-nav" id="mainNav">
-      <a href="#productos">Productos</a>
-      <a href="#testimonios">Testimonios</a>
-      <a href="#como-comprar">Cómo comprar</a>
-      <a href="#distribuidoras">Sé distribuidora</a>
-      <a href="#contacto">Contacto</a>
-    </nav>
-    <div class="header-actions">
-      <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
-      <button class="icon-btn" id="cartBtn" aria-label="Carrito">
-        🛍️<span class="badge" id="cartBadge" hidden>0</span>
-      </button>
+<div class="sticky-top-stack">
+  <div class="black-days-bar" id="blackDaysBar">
+    <div class="wrap black-days-bar-inner">
+      <span>🖤 <strong>BLACK DAYS:</strong> Combo Mujer +35 (20 en 1 + Drenaje Linfático) por $100.000 <span style="opacity:.75; text-decoration:line-through;">$140.000</span></span>
+      <a href="#card-combo-black-days-mujer35" class="black-days-bar-link">Ver oferta</a>
     </div>
   </div>
-</header>
+  <header class="site">
+    <div class="wrap header-row">
+      <a href="#top" class="logo-link">
+        <img src="logo.jpg" alt="YO Amor Propio">
+        <span>YO <span class="brand-script" style="font-size:1.2em; color:var(--accent);">Amor Propio</span></span>
+      </a>
+      <nav class="main-nav" id="mainNav">
+        <a href="#productos">Productos</a>
+        <a href="#testimonios">Testimonios</a>
+        <a href="#como-comprar">Cómo comprar</a>
+        <a href="#distribuidoras">Sé distribuidora</a>
+        <a href="#contacto">Contacto</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn menu-toggle" id="menuToggle" aria-label="Menú">☰</button>
+        <button class="icon-btn" id="cartBtn" aria-label="Carrito">
+          🛍️<span class="badge" id="cartBadge" hidden>0</span>
+        </button>
+      </div>
+    </div>
+  </header>
+</div>
 
 <div class="cod-top-banner">
   <div class="wrap cod-top-banner-inner">
@@ -933,6 +1007,27 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       ingredientes:["Té verde","Alcachofa","Durazno","Manzanilla","Jengibre","Apio"],
       beneficios:["Apoya tu metabolismo","Favorece la digestión","Aporta antioxidantes","Promueve bienestar integral"]
     },
+    {
+      id:"yo-mujer-20en1", name:"YO Mujer 20 en 1", line:"For women", color:"var(--mujer)", img:"product-20-en-1.jpg",
+      tagline:"Tu fórmula completa de bienestar femenino.", price:70000,
+      presentacion:"Magnesium Complex 20 en 1 · 120 cápsulas (60 g) · 30 porciones · For women",
+      ingredientes:["Magnesio + D3 y K2","Arándano rojo","Myo-inositol","Colágeno hidrolizado","Resveratrol","Biotina"],
+      beneficios:["20 activos en una sola fórmula: magnesio, colágeno, biotina y más","Apoya tu energía, tu piel y tu equilibrio hormonal","Arándano rojo y myo-inositol para tu salud íntima","Colágeno hidrolizado y biotina para piel, cabello y uñas"]
+    },
+    {
+      id:"yo-detox-drenaje", name:"YO Detox", line:"Satoomi", color:"var(--detox)", img:"product-drenaje-linfatico.jpg",
+      tagline:"Desinflama, depura y recupera tu ligereza.", price:70000,
+      presentacion:"Drenaje linfático · 5 activos · 120 unidades · 30 porciones · Alto en vitamina C",
+      ingredientes:["Saúco","Cúrcuma","Acerola","Té verde","Chlorella"],
+      beneficios:["5 activos naturales para drenar y desinflamar","Alto en vitamina C: refuerza tus defensas","Té verde y chlorella: detox natural y antioxidante","Ayuda a reducir la sensación de pesadez y retención"]
+    },
+    {
+      id:"yo-vigor-oxido", name:"YO Vigor", line:"Vital World", color:"var(--vigor)", img:"product-oxido-nitrico.jpg",
+      tagline:"Más energía, más resistencia, mejor circulación.", price:70000,
+      presentacion:"Óxido nítrico · Sabor frutos rojos · 180 g · 30 porciones",
+      ingredientes:["Remolacha (1.200 mg)","L-Citrulina (1.000 mg)","Asaí","Maca","Vitamina C"],
+      beneficios:["1.200 mg de remolacha + 1.000 mg de L-Citrulina por porción","Mejora la circulación y el rendimiento físico","Asaí y maca para energía natural y vitalidad","Sin azúcares añadidos · Alto en vitamina C"]
+    },
     // Combo: es un "producto" más para el carrito (mismo id, mismo flujo de pago,
     // mismo evento de Pixel) pero con precio fijo de paquete en vez de un promoPrice
     // con fecha de vencimiento. isCombo/comboStrike/comboBadge solo cambian cómo se
@@ -946,6 +1041,19 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       presentacion:"1x YO Día (480 ml) + 1x YO Noche (480 ml) · 50 porciones en total",
       ingredientes:["YO Día: Maca, Borojó y Chontaduro","YO Noche: Cidrón, Toronjil, Manzanilla y Cilantro"],
       beneficios:["Energía natural en el día y relajación real en la noche","Ahorras $21.000 frente a comprarlos por separado","Ideal para probar dos líneas distintas de una vez"]
+    },
+    // Combo Black Days: mismo patrón que el combo YO Día + YO Noche (isCombo +
+    // comboStrike/comboBadge), con blackDays:true solo para aplicar el estilo
+    // visual negro/dorado de la tarjeta (ver productsGridHtml y .black-days CSS).
+    // No tiene fecha de vencimiento automática: se retira manualmente cuando
+    // Sergio decida terminar la promoción.
+    {
+      id:"combo-black-days-mujer35", name:"Combo Mujer +35 · Black Days", line:"Black Days", color:"var(--blackgold)", img:"combo-black-days-mujer35.jpg",
+      tagline:"El dúo definitivo para desinflamar, nutrir y verte radiante.", price:100000,
+      isCombo:true, blackDays:true, comboStrike:140000, comboBadge:"Ahorra $40.000",
+      presentacion:"1x YO Mujer 20 en 1 (120 cápsulas) + 1x YO Detox Drenaje Linfático (120 unidades)",
+      ingredientes:["YO Mujer 20 en 1: Magnesio, D3 y K2, Colágeno, Biotina","YO Detox: Saúco, Cúrcuma, Acerola, Té verde y Chlorella"],
+      beneficios:["Pensado para mujeres +35: equilibrio hormonal, piel y desinflamación","Ahorras $40.000 frente a comprarlos por separado","Edición Black Days: precio especial por tiempo limitado"]
     }
   ];
 
@@ -990,7 +1098,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       var strikeValue = promo ? p.price : p.comboStrike;
       var badgeText = promo ? p.promoLabel : (p.comboBadge || null);
       return (
-        '<div class="card'+(p.isCombo ? ' combo-card' : '')+'" id="card-'+p.id+'" data-id="'+p.id+'">' +
+        '<div class="card'+(p.isCombo ? ' combo-card' : '')+(p.blackDays ? ' black-days' : '')+'" id="card-'+p.id+'" data-id="'+p.id+'">' +
           '<img class="card-img" src="'+p.img+'" alt="'+p.name+'" data-toggle="'+p.id+'" loading="lazy" decoding="async">' +
           '<div class="card-body">' +
             '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
