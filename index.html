@@ -677,6 +677,72 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     .cod-products-callout{padding:16px 18px;}
     .cod-products-callout strong{font-size:1.08rem;}
   }
+
+  /* ===== Banner principal Black Days (hero de campaña) ===== */
+  .bd-hero{
+    position:relative; overflow:hidden; color:#fff; text-align:center;
+    background:
+      radial-gradient(700px 380px at 85% 0%, rgba(224,68,125,.28), transparent 65%),
+      radial-gradient(600px 360px at 10% 100%, rgba(107,46,122,.35), transparent 65%),
+      #0a0709;
+    padding:40px 0 44px;
+  }
+  .bd-kicker{
+    display:inline-block; margin:0 0 6px; color:var(--accent);
+    font-weight:800; font-size:clamp(1rem, 3.6vw, 1.6rem); letter-spacing:.06em; text-transform:uppercase;
+  }
+  .bd-title{
+    margin:0; font-weight:800; line-height:.9; letter-spacing:.02em; color:#fff;
+    font-size:clamp(3.4rem, 12vw, 7rem);
+    -webkit-text-stroke:2px #fff;
+    text-shadow: 4px 4px 0 var(--accent), 8px 8px 0 rgba(224,68,125,.35), 0 0 40px rgba(224,68,125,.35);
+  }
+  .bd-sub{margin:14px auto 26px; max-width:640px; font-size:clamp(1rem,2.6vw,1.2rem); color:#f1e6ec; line-height:1.4;}
+  .bd-sub strong{color:#fff;}
+  .bd-products{
+    display:grid; grid-template-columns:1fr auto 1fr; gap:14px; align-items:stretch;
+    max-width:900px; margin:0 auto;
+  }
+  .bd-plus{align-self:center; font-size:2.2rem; font-weight:800; color:var(--accent);}
+  .bd-prod{
+    background:#16101a; border:1px solid rgba(224,68,125,.35); border-radius:var(--radius);
+    overflow:hidden; text-align:left; display:flex; flex-direction:column;
+  }
+  .bd-prod img{display:block; width:100%; height:auto; aspect-ratio:4/5; object-fit:cover;}
+  .bd-prod-body{padding:14px 16px 16px;}
+  .bd-prod-body h3{margin:0 0 8px; font-size:1.05rem; color:#fff;}
+  .bd-prod-body ul{margin:0; padding:0; list-style:none; display:grid; gap:6px;}
+  .bd-prod-body li{font-size:.88rem; color:#e9dde4; line-height:1.35; padding-left:20px; position:relative;}
+  .bd-prod-body li::before{content:"✓"; position:absolute; left:0; color:var(--accent); font-weight:800;}
+  .bd-buy{margin-top:26px; display:flex; flex-direction:column; align-items:center; gap:12px;}
+  .bd-price{display:flex; align-items:baseline; gap:14px; flex-wrap:wrap; justify-content:center;}
+  .bd-price s{color:#a99aa3; font-size:1.25rem;}
+  .bd-price b{font-size:clamp(2.2rem,7vw,3rem); line-height:1; color:#fff;}
+  .bd-save{background:var(--accent); color:#fff; font-weight:700; font-size:.9rem; padding:6px 14px; border-radius:999px;}
+  .bd-cta{font-size:1.1rem; padding:16px 34px; min-height:52px;}
+  @media (min-width:980px){
+    .bd-main{display:grid; grid-template-columns:1fr 320px; gap:36px; align-items:center; max-width:1100px; margin:0 auto;}
+    .bd-products{max-width:none; margin:0;}
+    .bd-buy{margin-top:0; background:#16101a; border:1px solid rgba(224,68,125,.35); border-radius:var(--radius); padding:26px 22px;}
+    .bd-buy .bd-price{flex-direction:column; gap:6px;}
+    .bd-cta{width:100%; padding-inline:18px; white-space:nowrap;}
+    .bd-sub{margin-bottom:28px;}
+  }
+  .bd-trust{font-size:.85rem; color:#cbbcc5; margin:0;}
+  @media (prefers-reduced-motion: no-preference){
+    .bd-cta{animation:bdPulse 2.2s ease-in-out infinite;}
+    @keyframes bdPulse{0%,100%{box-shadow:0 0 0 0 rgba(224,68,125,.55);}50%{box-shadow:0 0 0 12px rgba(224,68,125,0);}}
+  }
+  @media (max-width:640px){
+    .bd-hero{padding:28px 0 32px;}
+    .bd-title{-webkit-text-stroke:1px #fff; text-shadow:3px 3px 0 var(--accent), 6px 6px 0 rgba(224,68,125,.35);}
+    .bd-products{grid-template-columns:1fr 1fr; gap:10px;}
+    .bd-plus{display:none;}
+    .bd-prod-body{padding:10px 10px 12px;}
+    .bd-prod-body h3{font-size:.92rem;}
+    .bd-prod-body li{font-size:.78rem; padding-left:16px;}
+    .bd-cta{width:100%;}
+  }
 </style>
 </head>
 <body>
@@ -710,6 +776,49 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     </div>
   </header>
 </div>
+
+  <!-- Banner principal Black Days: primero que ve el tráfico de pauta. El botón
+       reutiliza el mismo "Comprar ahora" de la tarjeta del combo (carrito + Pixel
+       + checkout), así no se duplica lógica de compra. -->
+  <section class="bd-hero" id="black-days" aria-labelledby="bdTitle">
+    <div class="wrap">
+      <p class="bd-kicker">¡Solo para mujeres +35!</p>
+      <h2 class="bd-title" id="bdTitle">BLACK DAYS</h2>
+      <p class="bd-sub"><strong>Combo Mujer +35:</strong> YO Mujer 20 en 1 + YO Detox Drenaje Linfático, a precio especial por tiempo limitado.</p>
+      <div class="bd-main">
+      <div class="bd-products">
+        <article class="bd-prod">
+          <img src="bd-20-en-1.jpg" alt="Frasco real de YO Mujer 20 en 1 (Magnesium Complex for women)" width="720" height="900" decoding="async">
+          <div class="bd-prod-body">
+            <h3>YO Mujer 20 en 1</h3>
+            <ul>
+              <li>Apoya tu equilibrio hormonal</li>
+              <li>Piel, cabello y uñas: colágeno + biotina</li>
+              <li>Energía y descanso con magnesio, D3 y K2</li>
+            </ul>
+          </div>
+        </article>
+        <div class="bd-plus" aria-hidden="true">+</div>
+        <article class="bd-prod">
+          <img src="bd-drenaje-linfatico.jpg" alt="Frasco real de YO Detox Drenaje Linfático" width="720" height="900" decoding="async">
+          <div class="bd-prod-body">
+            <h3>YO Detox Drenaje Linfático</h3>
+            <ul>
+              <li>Ayuda a desinflamar y reducir la retención</li>
+              <li>Depura con té verde y chlorella</li>
+              <li>Alto en vitamina C para tus defensas</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+      <div class="bd-buy">
+        <div class="bd-price"><s>$140.000</s><b>$100.000</b><span class="bd-save">Ahorra $40.000</span></div>
+        <button type="button" class="btn btn-accent bd-cta" id="bdBuyBtn">Comprar combo ahora</button>
+        <p class="bd-trust">✓ Paga cuando recibas · ✓ Envío a toda Colombia · ✓ Registro INVIMA</p>
+      </div>
+      </div>
+    </div>
+  </section>
 
 <div class="cod-top-banner">
   <div class="wrap cod-top-banner-inner">
@@ -1413,6 +1522,16 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       );
     }).join('');
     document.getElementById('cartTotal').textContent = fmt(cartTotal());
+  }
+
+  // Banner Black Days: dispara el mismo botón "Comprar ahora" de la tarjeta del
+  // combo, para usar exactamente el mismo flujo (carrito, Pixel AddToCart, checkout).
+  var bdBuyBtn = document.getElementById('bdBuyBtn');
+  if(bdBuyBtn){
+    bdBuyBtn.addEventListener('click', function(){
+      var src = document.querySelector('#productsGrid [data-buy="combo-black-days-mujer35"]');
+      if(src) src.click();
+    });
   }
 
   document.getElementById('cartBody').addEventListener('click', function(e){
