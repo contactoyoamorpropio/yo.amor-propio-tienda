@@ -1908,6 +1908,15 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   function closeCheckout(){ checkoutWrap.classList.remove('open'); overlay.classList.remove('open'); }
   document.getElementById('goCheckout').addEventListener('click', openCheckout);
   document.getElementById('cancelCheckout').addEventListener('click', function(){ closeCheckout(); openCart(); });
+  // Tocar el fondo oscuro fuera del formulario (o la tecla Esc) lo cierra y deja
+  // la página normal, para que quien llegue por un link de compra directa pueda
+  // seguir mirando productos. No cierra si el pedido se está enviando.
+  checkoutWrap.addEventListener('click', function(e){
+    if(e.target === checkoutWrap && !orderInFlight) closeCheckout();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && checkoutWrap.classList.contains('open') && !orderInFlight) closeCheckout();
+  });
 
   function renderOrderSummary(){
     var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
@@ -1938,6 +1947,48 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   renderCart();
   checkReturnFromBold();
   retryPendingOrderIfAny();
+  handleDirectBuyLink();
+
+  // Link de compra directa para la pauta: /?comprar=ID_DEL_PRODUCTO
+  // Deja en el carrito solo ese producto (cantidad 1), abre "Finalizar pedido"
+  // y envía los mismos eventos que "Comprar ahora" (AddToCart + InitiateCheckout,
+  // este último lo envía openCheckout). Luego quita "comprar" de la URL para que
+  // al recargar no se repita; utm_*, fbclid y el #ancla se conservan.
+  // Si el ID no existe, no hace nada.
+  function handleDirectBuyLink(){
+    try{
+      var params = new URLSearchParams(window.location.search);
+      if(!params.has('comprar') || params.has('pedido')) return;
+      var id = (params.get('comprar') || '').trim();
+      var p = productById(id);
+      if(!p) return;
+
+      // En esta visita no se envía el ViewContent automático del banner del
+      // combo, para que Meta reciba AddToCart → InitiateCheckout en orden.
+      comboViewSent = true;
+
+      cart = {};
+      cart[id] = 1;
+      saveCart(cart);
+      renderCart();
+
+      var cp = cartContentsForPixel();
+      trackPixelEvent('AddToCart', {
+        content_ids: cp.ids,
+        content_name: p.name,
+        content_type: 'product',
+        contents: cp.contents,
+        value: effectivePrice(p),
+        currency: 'COP'
+      });
+      openCheckout();
+
+      params.delete('comprar');
+      var qs = params.toString();
+      window.history.replaceState(window.history.state, document.title,
+        window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+    }catch(e){}
+  }
 })();
 </script>
 </body>
