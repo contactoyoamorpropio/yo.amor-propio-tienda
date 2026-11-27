@@ -81,6 +81,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     --mujer:#9C2D5E;
     --detox:#2E7D4F;
     --blackgold:#C89A3C;
+    --danger:#C62828;
+    --wa:#1b9e4b;
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark){
@@ -93,6 +95,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       --shadow: 0 8px 24px rgba(0,0,0,.35);
       --shadow-sm: 0 4px 14px rgba(0,0,0,.3);
       --shadow-lg: 0 20px 50px rgba(0,0,0,.5);
+      --danger:#FF8A80;
+      --wa:#3ddc84;
     }
   }
   :root[data-theme="dark"]{
@@ -104,6 +108,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     --shadow: 0 8px 24px rgba(0,0,0,.35);
     --shadow-sm: 0 4px 14px rgba(0,0,0,.3);
     --shadow-lg: 0 20px 50px rgba(0,0,0,.5);
+    --danger:#FF8A80;
+    --wa:#3ddc84;
   }
 
   *{box-sizing:border-box;}
@@ -620,8 +626,33 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   .field label{display:block; font-size:.82rem; font-weight:600; margin-bottom:6px;}
   .field input, .field textarea{
     width:100%; border:1px solid var(--border); background:var(--bg); color:var(--text);
-    border-radius:10px; padding:10px 12px; font-family:inherit; font-size:.92rem;
+    border-radius:10px; padding:10px 12px; font-family:inherit; font-size:16px; /* 16px: evita el zoom automático de iPhone al tocar el campo */
   }
+  .field input.is-invalid, .field textarea.is-invalid{border-color:var(--danger); box-shadow:0 0 0 3px color-mix(in srgb, var(--danger) 18%, transparent);}
+  .field-error{display:block; color:var(--danger); font-size:.8rem; font-weight:600; margin-top:5px;}
+  .checkout-perks{display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; background:color-mix(in srgb, var(--accent) 9%, var(--surface)); border:1px solid color-mix(in srgb, var(--accent) 28%, var(--border)); border-radius:12px; padding:10px 12px; font-size:.86rem; font-weight:700; margin:0 0 14px; text-align:center;}
+  .order-summary .os-item{display:flex; align-items:center; gap:10px; min-width:0;}
+  .order-summary .os-thumb{width:42px; height:42px; border-radius:8px; object-fit:cover; flex-shrink:0;}
+  .order-summary .row{align-items:center; gap:10px;}
+  .order-summary .ship-free{color:var(--fit); font-weight:700;}
+  .data-note{font-size:.76rem; color:var(--text-muted); margin:-4px 0 6px; line-height:1.45;}
+  .btn-wa-alt{display:flex; align-items:center; justify-content:center; gap:8px; margin-top:12px; background:transparent; color:var(--wa); border:1.5px solid var(--wa); text-decoration:none;}
+  @media (hover:hover){ .btn-wa-alt:hover{background:color-mix(in srgb, var(--wa) 10%, transparent);} }
+  .checkout-sticky{position:sticky; bottom:0; z-index:3; margin:14px -24px -24px; padding:10px 16px 14px; background:var(--surface); border-top:1px solid var(--border); border-radius:0 0 20px 20px; box-shadow:0 -10px 24px rgba(0,0,0,.10); text-align:center;}
+  .checkout-sticky.is-hidden{display:none;}
+  .checkout-sticky small{display:block; font-size:.74rem; color:var(--text-muted); margin-top:6px;}
+  .done-modal{text-align:center;}
+  .done-modal .done-icon{font-size:2.6rem; line-height:1; margin-bottom:8px;}
+  .done-modal .done-id{display:inline-block; font-weight:800; background:var(--bg); border-radius:10px; padding:6px 12px; margin:6px 0 10px; letter-spacing:.02em;}
+  .done-modal .done-products{font-size:.9rem; color:var(--text-muted); margin:0 0 14px;}
+  .done-modal ol{text-align:left; margin:0 0 16px; padding-left:22px; font-size:.9rem; line-height:1.5;}
+  .done-modal ol li{margin-bottom:6px;}
+  .card-ref{margin:-4px 0 0; font-size:.76rem; font-weight:600; color:var(--text-muted);}
+  .card-perks{margin:2px 0 0; font-size:.76rem; font-weight:600; color:var(--text-muted);}
+  .black-days .card-perks{color:#d8d2c8;}
+  .bd-photo{position:relative;}
+  .bd-ref{position:absolute; left:0; right:0; bottom:0; padding:22px 10px 8px; font-size:.72rem; font-weight:600; line-height:1.3; color:#fff; background:linear-gradient(to bottom, transparent, rgba(0,0,0,.78)); text-align:left;}
+  .footer-legal{font-size:.8rem !important; opacity:.9;}
   .field textarea{resize:vertical; min-height:60px;}
   .order-summary{background:var(--bg); border-radius:14px; padding:14px 16px; margin:16px 0; font-size:.86rem;}
   .order-summary .row{display:flex; justify-content:space-between; margin-bottom:4px;}
@@ -632,6 +663,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     border-radius:10px; font-size:.85rem; z-index:70; opacity:0; transform:translateY(10px); transition:all .25s ease; pointer-events:none;
   }
   .toast.show{opacity:1; transform:translateY(0);}
+  /* Con el formulario abierto el aviso va arriba, para no tapar el botón fijo de confirmar */
+  body:has(#checkoutWrap.open) .toast{bottom:auto; top:16px;}
 
   [hidden]{display:none!important;}
 
@@ -791,7 +824,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
 <div class="sticky-top-stack">
   <div class="black-days-bar" id="blackDaysBar">
     <div class="wrap black-days-bar-inner">
-      <span>🖤 <strong>BLACK DAYS:</strong> <span class="bdb-long">Combo Mujer +35 (20 en 1 + Drenaje Linfático) por $100.000 <span style="opacity:.75; text-decoration:line-through;">$140.000</span></span><span class="bdb-short">Combo Mujer +35 a $100.000</span></span>
+      <span>🖤 <strong>BLACK DAYS:</strong> <span class="bdb-long">Combo Mujer +35 (20 en 1 + Drenaje Linfático) por $100.000 <span style="opacity:.75; text-decoration:line-through;">$140.000</span> · Envío gratis<span data-hasta="2026-12-01"> · Hasta el 1 de diciembre</span></span><span class="bdb-short">Combo Mujer +35 a $100.000</span></span>
       <a href="#card-combo-black-days-mujer35" class="black-days-bar-link">Ver oferta</a>
     </div>
   </div>
@@ -825,11 +858,11 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     <div class="wrap">
       <p class="bd-kicker">¡Solo para mujeres +35!</p>
       <h2 class="bd-title" id="bdTitle">BLACK DAYS</h2>
-      <p class="bd-sub"><strong>Combo Mujer +35:</strong> YO Mujer 20 en 1 + YO Detox Drenaje Linfático<span class="bd-sub-extra">, a precio especial por tiempo limitado</span>.</p>
+      <p class="bd-sub"><strong>Combo Mujer +35:</strong> YO Mujer 20 en 1 + YO Detox Drenaje Linfático<span class="bd-sub-extra">, a precio especial<span data-hasta="2026-12-01"> hasta el 1 de diciembre</span></span>.</p>
       <div class="bd-main">
       <div class="bd-products">
         <article class="bd-prod">
-          <img src="bd-20-en-1.jpg" alt="Frasco real de YO Mujer 20 en 1 (Magnesium Complex for women)" width="720" height="900" fetchpriority="high" decoding="async">
+          <div class="bd-photo"><img src="bd-20-en-1.jpg" alt="Frasco real de YO Mujer 20 en 1 (Magnesium Complex for women)" width="720" height="900" fetchpriority="high" decoding="async"><span class="bd-ref">Magnesium Complex 20 en 1 · For women</span></div>
           <div class="bd-prod-body">
             <h3>YO Mujer 20 en 1</h3>
             <ul>
@@ -841,7 +874,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
         </article>
         <div class="bd-plus" aria-hidden="true">+</div>
         <article class="bd-prod">
-          <img src="bd-drenaje-linfatico.jpg" alt="Frasco real de YO Detox Drenaje Linfático" width="720" height="900" fetchpriority="high" decoding="async">
+          <div class="bd-photo"><img src="bd-drenaje-linfatico.jpg" alt="Frasco real de YO Detox Drenaje Linfático" width="720" height="900" fetchpriority="high" decoding="async"><span class="bd-ref">Drenaje linfático Satoomi · 5 activos</span></div>
           <div class="bd-prod-body">
             <h3>YO Detox Drenaje Linfático</h3>
             <ul>
@@ -853,9 +886,9 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
         </article>
       </div>
       <div class="bd-buy">
-        <div class="bd-price"><s>$140.000</s><b>$100.000</b><span class="bd-save">Ahorra $40.000</span></div>
+        <div class="bd-price"><s>$140.000</s><b>$100.000</b><span class="bd-save">Ahorra $40.000<span data-hasta="2026-12-01"> · hasta el 1 de dic.</span></span></div>
         <button type="button" class="btn btn-accent bd-cta" id="bdBuyBtn">Comprar combo ahora</button>
-        <p class="bd-trust">✓ Paga cuando recibas · ✓ Envío a toda Colombia · ✓ Registro INVIMA</p>
+        <p class="bd-trust">✓ Envío GRATIS a toda Colombia · ✓ Pagas al recibir · ✓ Registro INVIMA</p>
       </div>
       </div>
     </div>
@@ -882,7 +915,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   <section class="wrap hero">
     <div>
       <h1>Elige lo que te hace bien, <em>elige YO</em>.</h1>
-      <p>Bebidas funcionales e ingredientes naturales para tu energía, tu descanso, tu piel y tu metabolismo. Nutre tu cuerpo, eleva tu energía, fortalece tu bienestar.</p>
+      <p>Suplementos y bebidas funcionales con ingredientes naturales para tu energía, tu descanso, tu piel y tu metabolismo. Nutre tu cuerpo, eleva tu energía, fortalece tu bienestar.</p>
       <div class="hero-ctas">
         <a href="#productos" class="btn btn-primary">Ver productos</a>
         <a href="#productos" class="btn btn-accent">Comprar ahora</a>
@@ -918,7 +951,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     <div class="section-head">
       <div class="kicker">Nuestra línea</div>
       <h2>Productos YO</h2>
-      <p>Cuatro fórmulas pensadas para distintos momentos de tu día. Envíos a toda Colombia.</p>
+      <p>Productos seleccionados por YO Amor Propio para cada momento de tu día. Envío gratis a toda Colombia.</p>
     </div>
     <div class="cod-products-callout">
       <span class="cod-icon">💵</span>
@@ -952,7 +985,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
           </div>
         </div>
         <div class="testimonial-stars" aria-label="5 de 5 estrellas">★★★★★</div>
-        <p class="testimonial-quote">Buenas tardes. Soy Juliana, vivo en Fusagasugá y quiero agradecerles, porque después de mucho tiempo sin dormir adecuadamente y, luego de probar desde lo natural hasta lo formulado, me recomendaron su producto YO Descanso, lo compré pensando en &ldquo;uno más&rdquo;. Pero estoy tan satisfecha con el resultado, que al fin he tenido noches de verdadero y reparador descanso. Dios los bendiga.</p>
+        <p class="testimonial-quote">Buenas tardes. Soy Juliana, vivo en Fusagasugá y quiero agradecerles, porque después de mucho tiempo sin dormir adecuadamente y, luego de probar desde lo natural hasta lo formulado, me recomendaron su producto YO Descanso [hoy YO Noche], lo compré pensando en &ldquo;uno más&rdquo;. Pero estoy tan satisfecha con el resultado, que al fin he tenido noches de verdadero y reparador descanso. Dios los bendiga.</p>
         <div class="testimonial-foot">
           <span class="testimonial-tag" style="background:var(--noche)">YO Noche</span>
           <span class="testimonial-wa-badge"><b>✓</b> Mensaje real de WhatsApp</span>
@@ -990,13 +1023,16 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   <div class="wrap footer-grid">
     <div>
       <h4>YO Amor Propio</h4>
-      <p>Bebidas funcionales y suplementos de bienestar. Elige lo que te hace bien, elige YO.</p>
+      <p>Suplementos y bebidas funcionales de bienestar. Elige lo que te hace bien, elige YO.</p>
+      <p class="footer-legal">YO Amor Propio es una marca de <strong>Grupo Mi Finca SAS</strong> · NIT 901.733.235-8</p>
     </div>
     <div>
       <h4>Contacto</h4>
       <ul>
-        <li><a id="waFooterLink" target="_blank" rel="noopener">WhatsApp de pedidos</a></li>
-        <li>Envíos a toda Colombia</li>
+        <li><a id="waFooterLink" target="_blank" rel="noopener">WhatsApp de pedidos: +57 320 923 4733</a></li>
+        <li><a href="mailto:contacto.yoamorpropio@gmail.com">contacto.yoamorpropio@gmail.com</a></li>
+        <li>Km 5 vía Siberia–Tenjo, vereda La Aldea, Tenjo, Cundinamarca</li>
+        <li>Envío gratis a toda Colombia</li>
       </ul>
     </div>
     <div>
@@ -1042,13 +1078,16 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     <h3>Finalizar pedido</h3>
     <p class="sub">Completa tus datos de envío para generar el pedido.</p>
 
+    <div class="checkout-perks"><span>🚚 Envío GRATIS a toda Colombia</span><span>💵 Pagas al recibir</span></div>
+
+    <div class="order-summary" id="orderSummary"></div>
+
     <div class="field"><label for="cName">Nombre completo *</label><input id="cName" type="text" placeholder="Tu nombre" autocomplete="name"></div>
     <div class="field"><label for="cPhone">Teléfono / WhatsApp *</label><input id="cPhone" type="tel" placeholder="300 000 0000" autocomplete="tel" inputmode="tel"></div>
     <div class="field"><label for="cCity">Ciudad *</label><input id="cCity" type="text" placeholder="Ciudad" autocomplete="address-level2"></div>
     <div class="field"><label for="cAddress">Dirección de envío *</label><input id="cAddress" type="text" placeholder="Dirección completa, barrio" autocomplete="street-address"></div>
     <div class="field"><label for="cNotes">Notas (opcional)</label><textarea id="cNotes" placeholder="Referencia, horario de entrega, etc."></textarea></div>
-
-    <div class="order-summary" id="orderSummary"></div>
+    <p class="data-note">Usamos tus datos solo para gestionar y entregar tu pedido. Responsable: Grupo Mi Finca SAS.</p>
 
     <div class="pay-cod-card">
       <div class="pay-cod-title"><span class="pay-cod-icon">💵</span> Compra y paga cuando recibas</div>
@@ -1064,7 +1103,37 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       <p class="pay-online-note">🔒 Pago 100% seguro procesado por Bold · Envío gratis a toda Colombia</p>
     </div>
 
+    <a class="btn btn-block btn-wa-alt" id="checkoutWaBtn" href="#" target="_blank" rel="noopener">💬 ¿Prefieres pedir por WhatsApp? Escríbenos</a>
+
     <button class="btn btn-ghost btn-block" id="cancelCheckout" style="margin-top:10px;">Volver al carrito</button>
+
+    <!-- Botón fijo en celular: solo dispara el mismo botón "Confirmar pedido" de arriba -->
+    <div class="checkout-sticky" id="checkoutSticky">
+      <button type="button" class="btn btn-cod btn-block" id="stickyCodBtn"><span id="stickyLabel">Confirmar pedido</span> · <span id="stickyTotal"></span></button>
+      <small>Pago contra entrega · Envío gratis</small>
+    </div>
+  </div>
+</div>
+
+<!-- Pantalla de pedido confirmado -->
+<div class="modal-wrap" id="orderDoneWrap" role="dialog" aria-modal="true" aria-labelledby="doneTitle">
+  <div class="modal done-modal">
+    <div class="done-icon">✅</div>
+    <h3 id="doneTitle">¡Pedido confirmado!</h3>
+    <div class="done-id">Pedido <span id="doneId"></span></div>
+    <p class="done-products" id="doneProducts"></p>
+    <ol id="doneStepsCod">
+      <li>Te escribimos por WhatsApp al número que dejaste para confirmar tus datos y la entrega.</li>
+      <li>Despachamos tu pedido con envío gratis.</li>
+      <li>Pagas al recibir, en efectivo o transferencia.</li>
+    </ol>
+    <ol id="doneStepsOnline" hidden>
+      <li>Recibimos tu pago en línea.</li>
+      <li>Te escribimos por WhatsApp para confirmar tus datos y la entrega.</li>
+      <li>Despachamos tu pedido con envío gratis.</li>
+    </ol>
+    <a class="btn btn-block btn-wa-alt" id="doneWaBtn" href="#" target="_blank" rel="noopener">💬 Escríbenos por WhatsApp</a>
+    <button type="button" class="btn btn-ghost btn-block" id="doneCloseBtn" style="margin-top:10px;">Seguir viendo productos</button>
   </div>
 </div>
 
@@ -1158,21 +1227,21 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       beneficios:["Apoya tu metabolismo","Favorece la digestión","Aporta antioxidantes","Promueve bienestar integral"]
     },
     {
-      id:"yo-mujer-20en1", name:"YO Mujer 20 en 1", line:"For women", color:"var(--mujer)", img:"product-20-en-1.jpg",
+      id:"yo-mujer-20en1", ref:"Magnesium Complex 20 en 1 · For women", name:"YO Mujer 20 en 1", line:"For women", color:"var(--mujer)", img:"product-20-en-1.jpg",
       tagline:"Tu fórmula completa de bienestar femenino.", price:70000,
       presentacion:"Magnesium Complex 20 en 1 · 120 cápsulas (60 g) · 30 porciones · For women",
       ingredientes:["Magnesio + D3 y K2","Arándano rojo","Myo-inositol","Colágeno hidrolizado","Resveratrol","Biotina"],
       beneficios:["20 activos en una sola fórmula: magnesio, colágeno, biotina y más","Apoya tu energía, tu piel y tu equilibrio hormonal","Arándano rojo y myo-inositol para tu salud íntima","Colágeno hidrolizado y biotina para piel, cabello y uñas"]
     },
     {
-      id:"yo-detox-drenaje", name:"YO Detox", line:"Satoomi", color:"var(--detox)", img:"product-drenaje-linfatico.jpg",
+      id:"yo-detox-drenaje", ref:"Drenaje linfático Satoomi · 5 activos", name:"YO Detox", line:"Satoomi", color:"var(--detox)", img:"product-drenaje-linfatico.jpg",
       tagline:"Desinflama, depura y recupera tu ligereza.", price:70000,
       presentacion:"Drenaje linfático · 5 activos · 120 unidades · 30 porciones · Alto en vitamina C",
       ingredientes:["Saúco","Cúrcuma","Acerola","Té verde","Chlorella"],
       beneficios:["5 activos naturales para drenar y desinflamar","Alto en vitamina C: refuerza tus defensas","Té verde y chlorella: detox natural y antioxidante","Ayuda a reducir la sensación de pesadez y retención"]
     },
     {
-      id:"yo-vigor-oxido", name:"YO Vigor", line:"Vital World", color:"var(--vigor)", img:"product-oxido-nitrico.jpg",
+      id:"yo-vigor-oxido", ref:"Óxido nítrico Vital World · Remolacha + L-Citrulina", name:"YO Vigor", line:"Vital World", color:"var(--vigor)", img:"product-oxido-nitrico.jpg",
       tagline:"Más energía, más resistencia, mejor circulación.", price:70000,
       presentacion:"Óxido nítrico · Sabor frutos rojos · 180 g · 30 porciones",
       ingredientes:["Remolacha (1.200 mg)","L-Citrulina (1.000 mg)","Asaí","Maca","Vitamina C"],
@@ -1253,6 +1322,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
           '<div class="card-body">' +
             '<span class="line-tag" style="background:'+p.color+'">'+p.line+'</span>' +
             '<h3>'+p.name+'</h3>' +
+            (p.ref ? '<p class="card-ref">'+p.ref+'</p>' : '') +
             '<p class="tagline">'+p.tagline+'</p>' +
             '<div class="price-row">' +
               (showStrike ? '<span class="price-original">'+fmt(strikeValue)+'</span>' : '') +
@@ -1263,6 +1333,7 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
               '<button class="btn btn-outline btn-sm" data-add="'+p.id+'" aria-label="Agregar '+p.name+' al carrito">Agregar</button>' +
               '<button class="btn btn-accent btn-sm" data-buy="'+p.id+'" aria-label="Comprar '+p.name+' ahora">Comprar ahora</button>' +
             '</div>' +
+            '<p class="card-perks">🚚 Envío gratis · 💵 Pagas al recibir</p>' +
             '<button class="details-toggle" data-toggle="'+p.id+'">Ver ingredientes y beneficios ▾</button>' +
           '</div>' +
           '<div class="details-panel" id="details-'+p.id+'">' +
@@ -1465,7 +1536,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       cart = {};
       saveCart(cart);
       renderCart();
-      showToast('¡Pago recibido! Gracias por tu compra 💜');
+      try{ showOrderDone({id: pending.orderId, productos: pending.productos, total: pending.total, online: true}); }
+      catch(e){ showToast('¡Pago recibido! Gracias por tu compra 💜'); }
     }
 
     var cleanUrl = window.location.origin + window.location.pathname;
@@ -1725,6 +1797,9 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   // Enfoca el primer campo vacío al abrir el checkout, para que el cliente
   // pueda empezar a escribir de inmediato (menos clics = compra más rápida).
   function focusFirstEmptyField(){
+    // En celular no se abre el teclado solo: tapa el formulario y en iPhone
+    // hace zoom. En computador sí se pone el cursor en el primer campo vacío.
+    try{ if(window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) return; }catch(e){}
     var ids = ['cName','cPhone','cCity','cAddress'];
     for(var i=0;i<ids.length;i++){
       var el = document.getElementById(ids[i]);
@@ -1879,7 +1954,8 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
       saveCart(cart);
       renderCart();
       closeCheckout();
-      showToast('¡Pedido confirmado! Te contactaremos por WhatsApp para coordinar la entrega y el pago 💜');
+      try{ showOrderDone({id: codOrderId, productos: payload.productos, total: payload.total, online: false}); }
+      catch(e){ showToast('¡Pedido confirmado! Te contactaremos por WhatsApp para coordinar la entrega y el pago 💜'); }
       orderInFlight = false;
       setPayButtonsDisabled(false);
       btn.textContent = 'Confirmar pedido · Pago contra entrega';
@@ -1908,6 +1984,121 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
   function closeCheckout(){ checkoutWrap.classList.remove('open'); overlay.classList.remove('open'); }
   document.getElementById('goCheckout').addEventListener('click', openCheckout);
   document.getElementById('cancelCheckout').addEventListener('click', function(){ closeCheckout(); openCart(); });
+
+  // --- Campos que faltan: se marcan en rojo con su mensaje. Corre ANTES del
+  // manejador de "Confirmar"/"Pagar en línea" (fase de captura) y no detiene
+  // nada: la validación y el envío siguen siendo exactamente los mismos.
+  var CHECKOUT_REQUIRED = [
+    {id:'cName', msg:function(v){ return v ? '' : 'Escribe tu nombre'; }},
+    {id:'cPhone', msg:function(v){ return !v ? 'Escribe tu teléfono o WhatsApp' : (isPhoneValid(v) ? '' : 'Revisa el número, parece incompleto'); }},
+    {id:'cCity', msg:function(v){ return v ? '' : 'Escribe tu ciudad'; }},
+    {id:'cAddress', msg:function(v){ return v ? '' : 'Escribe la dirección de entrega'; }}
+  ];
+  function setFieldError(el, msg){
+    var box = el.parentNode, err = box.querySelector('.field-error');
+    if(msg){
+      el.classList.add('is-invalid'); el.setAttribute('aria-invalid', 'true');
+      if(!err){ err = document.createElement('span'); err.className = 'field-error'; err.id = el.id + '-err'; box.appendChild(err); }
+      el.setAttribute('aria-describedby', err.id);
+      err.textContent = msg;
+    }else{
+      el.classList.remove('is-invalid'); el.removeAttribute('aria-invalid'); el.removeAttribute('aria-describedby');
+      if(err) err.parentNode.removeChild(err);
+    }
+  }
+  function markCheckoutFields(){
+    var first = null;
+    CHECKOUT_REQUIRED.forEach(function(f){
+      var el = document.getElementById(f.id), m = f.msg(el.value.trim());
+      setFieldError(el, m);
+      if(m && !first) first = el;
+    });
+    return first;
+  }
+  checkoutWrap.addEventListener('click', function(e){
+    var t = e.target && e.target.closest ? e.target.closest('#payCodBtn, #payOnlineBtn') : null;
+    if(!t || orderInFlight) return;
+    var first = markCheckoutFields();
+    if(first){
+      try{ first.scrollIntoView({block:'center', behavior:'smooth'}); }catch(err){ first.scrollIntoView(); }
+      try{ first.focus({preventScroll:true}); }catch(err){}
+    }
+  }, true);
+  CHECKOUT_REQUIRED.forEach(function(f){
+    var el = document.getElementById(f.id);
+    el.addEventListener('input', function(){ if(el.classList.contains('is-invalid')) setFieldError(el, f.msg(el.value.trim())); });
+  });
+
+  // --- "¿Prefieres pedir por WhatsApp?": mensaje con el pedido ya escrito.
+  function checkoutWaMessage(){
+    var cf = getCustomerFields();
+    var msg = '¡Hola! Quiero hacer este pedido:\n' + productsSummaryText() + '\nTotal: ' + fmt(cartTotal()) + ' (envío gratis, pago contra entrega)';
+    if(cf.name) msg += '\nNombre: ' + cf.name;
+    if(cf.city) msg += '\nCiudad: ' + cf.city;
+    return msg;
+  }
+  function updateCheckoutWaLink(){
+    var a = document.getElementById('checkoutWaBtn');
+    if(a) a.href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' + encodeURIComponent(checkoutWaMessage());
+  }
+  document.getElementById('checkoutWaBtn').addEventListener('click', updateCheckoutWaLink);
+
+  // --- Botón "Confirmar pedido" fijo abajo: aparece solo mientras el botón
+  // real no se ve, y al tocarlo pulsa ese mismo botón (mismo flujo exacto).
+  (function(){
+    var sticky = document.getElementById('checkoutSticky');
+    var stickyBtn = document.getElementById('stickyCodBtn');
+    var stickyLabel = document.getElementById('stickyLabel');
+    var realCod = document.getElementById('payCodBtn');
+    if(!sticky || !stickyBtn || !realCod) return;
+    stickyBtn.addEventListener('click', function(){ realCod.click(); });
+    function mirror(){
+      stickyBtn.disabled = realCod.disabled;
+      stickyLabel.textContent = realCod.disabled ? realCod.textContent : 'Confirmar pedido';
+    }
+    mirror();
+    if('MutationObserver' in window){
+      new MutationObserver(mirror).observe(realCod, {attributes:true, childList:true, characterData:true, subtree:true});
+    }
+    if('IntersectionObserver' in window){
+      new IntersectionObserver(function(entries){
+        entries.forEach(function(en){ sticky.classList.toggle('is-hidden', en.isIntersecting); });
+      }, {root: checkoutWrap, threshold: 0.6}).observe(realCod);
+    }
+  })();
+
+  // --- Pantalla de pedido confirmado (reemplaza el aviso de 1,8 s).
+  function showOrderDone(info){
+    var wrap = document.getElementById('orderDoneWrap');
+    document.getElementById('doneId').textContent = info.id || '';
+    document.getElementById('doneProducts').textContent = (info.productos || '') + (info.total ? ' · Total ' + info.total : '');
+    document.getElementById('doneStepsCod').hidden = !!info.online;
+    document.getElementById('doneStepsOnline').hidden = !info.online;
+    document.getElementById('doneWaBtn').href = 'https://wa.me/' + WHATSAPP_NUMBER + '?text=' +
+      encodeURIComponent('¡Hola! Acabo de hacer el pedido ' + (info.id || '') + ' en la página web.');
+    var t = document.getElementById('toast'); if(t) t.classList.remove('show');
+    wrap.classList.add('open');
+    overlay.classList.add('open');
+  }
+  function closeOrderDone(){
+    var wrap = document.getElementById('orderDoneWrap');
+    if(!wrap.classList.contains('open')) return;
+    wrap.classList.remove('open');
+    overlay.classList.remove('open');
+  }
+  document.getElementById('doneCloseBtn').addEventListener('click', closeOrderDone);
+  document.getElementById('orderDoneWrap').addEventListener('click', function(e){ if(e.target === this) closeOrderDone(); });
+  overlay.addEventListener('click', closeOrderDone);
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeOrderDone(); });
+
+  // --- Textos con fecha de la promo: se ocultan solos después del día indicado.
+  (function(){
+    var now = Date.now();
+    document.querySelectorAll('[data-hasta]').forEach(function(el){
+      var end = Date.parse(el.getAttribute('data-hasta') + 'T23:59:59-05:00');
+      if(!isNaN(end) && now > end) el.hidden = true;
+    });
+  })();
   // Tocar el fondo oscuro fuera del formulario (o la tecla Esc) lo cierra y deja
   // la página normal, para que quien llegue por un link de compra directa pueda
   // seguir mirando productos. No cierra si el pedido se está enviando.
@@ -1922,10 +2113,14 @@ src="https://www.facebook.com/tr?id=1479268100932937&ev=PageView&noscript=1"
     var keys = Object.keys(cart).filter(function(k){ return cart[k]>0; });
     var html = keys.map(function(k){
       var p = productById(k);
-      return '<div class="row"><span>'+p.name+' × '+cart[k]+'</span><span>'+fmt(effectivePrice(p)*cart[k])+'</span></div>';
+      return '<div class="row"><span class="os-item"><img class="os-thumb" src="'+p.img+'" alt="" loading="lazy" decoding="async"><span>'+p.name+' × '+cart[k]+'</span></span><span>'+fmt(effectivePrice(p)*cart[k])+'</span></div>';
     }).join('');
+    html += '<div class="row"><span>Envío</span><span class="ship-free">Gratis</span></div>';
     html += '<div class="row total"><span>Total</span><span>'+fmt(cartTotal())+'</span></div>';
     document.getElementById('orderSummary').innerHTML = html;
+    var stickyTotal = document.getElementById('stickyTotal');
+    if(stickyTotal) stickyTotal.textContent = fmt(cartTotal());
+    updateCheckoutWaLink();
   }
 
   function showToast(msg){
